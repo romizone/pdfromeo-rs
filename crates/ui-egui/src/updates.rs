@@ -12,7 +12,7 @@ use egui::{Align, Layout};
 use crate::{PdfromeoApp, theme, widgets};
 
 /// Where every Pdfromeo release is listed.
-pub const RELEASES_PAGE: &str = "https://github.com/romizone/pdfromeo/releases";
+pub const RELEASES_PAGE: &str = "https://github.com/romizone/pdfromeo-rs/releases";
 
 /// The latest published release.
 #[derive(Clone, Debug, PartialEq, Eq)]

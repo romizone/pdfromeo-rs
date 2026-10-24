@@ -31,7 +31,7 @@ fn home_screen_links() {
     for (label, url) in [
         ("Join our Discord", links::DISCORD),
         ("Pdfromeo web page", "https://getartcraft.com/apps/pdfcraft"),
-        ("Pdfromeo on GitHub", "https://github.com/romizone/pdfromeo"),
+        ("Pdfromeo on GitHub", "https://github.com/romizone/pdfromeo-rs"),
         ("ArtCraft website", "https://getartcraft.com"),
     ] {
         let mut h = harness(|_| {});

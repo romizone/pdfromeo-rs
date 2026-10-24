@@ -1022,7 +1022,7 @@ fn vertices(doc: &Document) -> Vec<(String, Vec<f64>)> {
     out
 }
 
-/// romizone/pdfromeo#809: XFDF exchange dropped polygon and polyline vertices, so the
+/// romizone/pdfromeo-rs#809: XFDF exchange dropped polygon and polyline vertices, so the
 /// imported comments had no shape (and no appearance).
 #[test]
 fn xfdf_keeps_polygon_and_polyline_vertices() {

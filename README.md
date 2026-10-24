@@ -5,7 +5,7 @@ pure-Rust PDF reader and editor, renamed and packaged for **macOS** and **Androi
 
 ## Download
 
-Get the latest build from [Releases](https://github.com/romizone/pdfromeo/releases):
+Get the latest build from [Releases](https://github.com/romizone/pdfromeo-rs/releases):
 
 | Platform | File | Notes |
 |---|---|---|

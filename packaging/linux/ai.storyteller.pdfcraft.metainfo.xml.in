@@ -20,8 +20,8 @@
   <icon type="stock">ai.storyteller.pdfcraft</icon>
   <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
   <url type="homepage">https://getartcraft.com/apps/pdfcraft</url>
-  <url type="bugtracker">https://github.com/romizone/pdfromeo/issues</url>
-  <url type="help">https://github.com/romizone/pdfromeo</url>
+  <url type="bugtracker">https://github.com/romizone/pdfromeo-rs/issues</url>
+  <url type="help">https://github.com/romizone/pdfromeo-rs</url>
   <url type="contact">https://discord.gg/artcraft</url>
   <categories>
     <category>Office</category>
@@ -36,7 +36,7 @@
   <screenshots>
     <screenshot type="default">
       <caption>A PDF open with its threaded comments</caption>
-      <image>https://raw.githubusercontent.com/romizone/pdfromeo/main/docs/images/pdfcraft-viewer.png</image>
+      <image>https://raw.githubusercontent.com/romizone/pdfromeo-rs/main/docs/images/pdfcraft-viewer.png</image>
     </screenshot>
   </screenshots>
   <branding>

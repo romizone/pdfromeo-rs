@@ -1,4 +1,4 @@
-//! Project automation for PdfCraft, run via `cargo xtask <command>`.
+//! Project automation for Pdfromeo, run via `cargo xtask <command>`.
 
 use std::process::ExitCode;
 

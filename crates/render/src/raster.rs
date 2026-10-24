@@ -4744,7 +4744,7 @@ trailer << /Root 1 0 R >>
         }
     }
 
-    /// Item 1 of romizone/pdfromeo#623: a page's content used to be cut at `MAX_DECODED_STREAM`,
+    /// Item 1 of romizone/pdfromeo-rs#623: a page's content used to be cut at `MAX_DECODED_STREAM`,
     /// so everything after the cut was lost (the text and the title block of the A1 sample). Content
     /// that expands by a few times over is read to its end, however large it is.
     #[test]
