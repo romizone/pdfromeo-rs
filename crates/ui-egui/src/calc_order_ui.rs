@@ -20,7 +20,7 @@ use pdfcraft_render::DocInfo;
 
 use crate::canvas::PageXform;
 use crate::theme::{self, Tokens};
-use crate::{LeftPanel, PdfCraftApp, icons, widgets};
+use crate::{LeftPanel, PdfromeoApp, icons, widgets};
 
 /// Links and steps on the page, which is paper white in either theme.
 const LINK_OK: Color32 = Color32::from_rgb(0x1B, 0x63, 0xE0);
@@ -493,7 +493,7 @@ fn explained(issues: &[CalculationIssue]) -> String {
 }
 
 /// The Calculation order page; Back returns to Prepare a form.
-pub(crate) fn panel(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
+pub(crate) fn panel(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens) {
     let (back, close) = crate::panels::panel_header(ui, t, "Calculation order", Some(tl!("Back to Prepare a form")));
     if back {
         app.left = LeftPanel::Tool("form");

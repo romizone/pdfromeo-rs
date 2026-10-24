@@ -4,11 +4,11 @@
 use egui::Pos2;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::{Dialog, PdfCraftApp};
+use pdfcraft_ui_egui::{Dialog, PdfromeoApp};
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, include_bytes!("../data/form.pdf").to_vec()).unwrap();
         app.set_option("zoom", "150").unwrap();
@@ -24,13 +24,13 @@ fn harness() -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn at(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32) -> Pos2 {
+fn at(h: &Harness<'static, PdfromeoApp>, x: f32, y: f32) -> Pos2 {
     let r = h.state().views[0].page_screen_rect(0).expect("on screen");
     let k = r.width() / 300.0;
     r.min + egui::vec2(x * k, y * k)
 }
 
-fn marks(h: &Harness<'static, PdfCraftApp>) -> usize {
+fn marks(h: &Harness<'static, PdfromeoApp>) -> usize {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().redaction_marks()
 }
@@ -138,7 +138,7 @@ fn redaction_properties_survive_a_restart() {
     h.get_by_label("OK").click();
     h.run_steps(2);
     let json = h.state().persist();
-    let mut fresh = PdfCraftApp::new();
+    let mut fresh = PdfromeoApp::new();
     fresh.restore(&json);
     let p = &fresh.redact_prefs;
     assert_eq!(p.fill, None, "no colour is a saved choice, not a missing one");
@@ -154,7 +154,7 @@ fn redaction_properties_survive_a_restart() {
     assert_eq!((a.style.color, a.style.opacity, a.style.fill), ([0.0, 0.5, 0.0], 0.4, None));
     // Settings are untrusted: a bad colour, an unknown code set and a code outside the set are
     // dropped, the rest kept.
-    let mut odd = PdfCraftApp::new();
+    let mut odd = PdfromeoApp::new();
     odd.restore(
         r#"{"redact_prefs":{"outline":[2,0,0],"opacity":0.7,"code_set":"nope","codes":["(b)(6)","bogus"],"use_overlay":true,"use_code":true}}"#,
     );
@@ -183,7 +183,7 @@ fn redaction_properties_for_this_run_only_and_cancel() {
     h.run_steps(2);
     assert_eq!(h.state().redact_prefs.outline, [0.0, 0.0, 1.0], "used for this run");
     assert_eq!(h.state().redact_defaults.outline, [0.89, 0.13, 0.13], "not made the default");
-    let mut fresh = PdfCraftApp::new();
+    let mut fresh = PdfromeoApp::new();
     fresh.restore(&h.state().persist());
     assert_eq!(fresh.redact_prefs.outline, [0.89, 0.13, 0.13], "the next run starts from the saved defaults");
     // Cancel discards the edits made while the dialog was open.
@@ -200,7 +200,7 @@ fn redaction_properties_for_this_run_only_and_cancel() {
 fn redacting_an_imported_word_list() {
     let memo = pdfcraft_engine::Session::new().create_from_text("memo", "Call Ada today\nAda is private\nPublic line").unwrap().to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("memo.pdf", None, memo.clone()).unwrap();
         app
@@ -227,7 +227,7 @@ fn redacting_an_imported_word_list() {
 fn redaction_search_can_match_case_and_whole_words() {
     let memo = pdfcraft_engine::Session::new().create_from_text("memo", "Ada ada Adaline\nAda beta betamax").unwrap().to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("memo.pdf", None, memo.clone()).unwrap();
         app

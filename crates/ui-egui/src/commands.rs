@@ -2,13 +2,13 @@
 //! what it is called, where it appears, which key runs it and when it is enabled).
 //!
 //! Menus, keyboard shortcuts, the palette, the tool panels and automation (`set_option`, and
-//! the control channel later) all call `PdfCraftApp::execute`.
+//! the control channel later) all call `PdfromeoApp::execute`.
 
 use pdfcraft_engine::Edit;
 use pdfcraft_engine::commands::{self, COMMANDS, CommandSpec, Shortcut};
 
 use crate::{
-    Dialog, Mode, PdfCraftApp, PropsTab, RightPanel, SaveTarget,
+    Dialog, Mode, PdfromeoApp, PropsTab, RightPanel, SaveTarget,
     theme::{ThemeKind, ThemePreference},
     widgets,
 };
@@ -76,7 +76,7 @@ pub(crate) fn command_tip(ctx: &egui::Context, template: &str, id: &str) -> Stri
     crate::i18n::fmt(template, &[("key", &command_shortcut_label(ctx, id))])
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Whether a registered command can run now. The engine judges the document (security,
     /// contents, undo history); view state it can't see is checked here.
     pub(crate) fn command_enabled(&self, spec: &CommandSpec) -> bool {
@@ -779,7 +779,7 @@ fn tab_after(current: Option<usize>, count: usize, forward: bool) -> Option<usiz
 }
 
 /// Render a top-level menu's registered commands (with live labels, shortcuts and enablement).
-pub(crate) fn registry_menu(app: &mut PdfCraftApp, ui: &mut egui::Ui, menu: &str) {
+pub(crate) fn registry_menu(app: &mut PdfromeoApp, ui: &mut egui::Ui, menu: &str) {
     for spec in commands::menu(menu) {
         let label = commands::current_label(spec, &app.session, app.active_ids().map(|(_, id)| id));
         let label = crate::i18n::menu_label(spec.id, &label);

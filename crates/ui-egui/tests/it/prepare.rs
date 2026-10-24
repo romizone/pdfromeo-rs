@@ -6,12 +6,12 @@ use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{Queryable, by};
 use pdfcraft_engine::field_table::TableColumn;
-use pdfcraft_ui_egui::{Dialog, PdfCraftApp, QuickTool};
+use pdfcraft_ui_egui::{Dialog, PdfromeoApp, QuickTool};
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|cc| {
         cc.egui_ctx.options_mut(|options| options.warn_on_id_clash = true);
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, include_bytes!("../data/form.pdf").to_vec()).unwrap();
         app.set_option("zoom", "150").unwrap();
@@ -28,13 +28,13 @@ fn harness() -> Harness<'static, PdfCraftApp> {
 }
 
 /// A point on page 1 at (x, y) points from its top-left.
-fn at(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32) -> Pos2 {
+fn at(h: &Harness<'static, PdfromeoApp>, x: f32, y: f32) -> Pos2 {
     let r = h.state().views[0].page_screen_rect(0).expect("on screen");
     let k = r.width() / 300.0;
     r.min + egui::vec2(x * k, y * k)
 }
 
-fn drag(h: &mut Harness<'static, PdfCraftApp>, a: Pos2, b: Pos2) {
+fn drag(h: &mut Harness<'static, PdfromeoApp>, a: Pos2, b: Pos2) {
     h.hover_at(a);
     h.run_steps(1);
     h.drag_at(a);
@@ -47,12 +47,12 @@ fn drag(h: &mut Harness<'static, PdfCraftApp>, a: Pos2, b: Pos2) {
     h.run_steps(4);
 }
 
-fn names(h: &Harness<'static, PdfCraftApp>) -> Vec<String> {
+fn names(h: &Harness<'static, PdfromeoApp>) -> Vec<String> {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().form.iter().map(|f| f.name.clone()).collect()
 }
 
-fn rect_of(h: &Harness<'static, PdfCraftApp>, name: &str) -> [f64; 4] {
+fn rect_of(h: &Harness<'static, PdfromeoApp>, name: &str) -> [f64; 4] {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().form.iter().find(|f| f.name == name).unwrap().widgets[0].rect
 }
@@ -197,7 +197,7 @@ fn renaming_a_field_says_how_many_calculations_now_use_the_new_name() {
     let mut h = harness();
     h.state_mut().execute("form.prepare");
     h.run_steps(2);
-    let rename = |h: &mut Harness<'static, PdfCraftApp>, from: &str, to: &str| {
+    let rename = |h: &mut Harness<'static, PdfromeoApp>, from: &str, to: &str| {
         h.state_mut().open_field_props(from, 0);
         h.run_steps(2);
         h.state_mut().field_props.as_mut().expect("open").name = to.into();
@@ -209,7 +209,7 @@ fn renaming_a_field_says_how_many_calculations_now_use_the_new_name() {
     h.state_mut().field_props.as_mut().expect("open").calculate = Calculate::Notation("name * 2".into());
     h.get_by_label("OK").click();
     h.run_steps(3);
-    let calculation = |h: &Harness<'static, PdfCraftApp>| {
+    let calculation = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().form.iter().find(|f| f.name == "city").unwrap().actions.calculate.clone()
     };
@@ -293,7 +293,7 @@ fn position_tab_rotates_a_field() {
     let mut h = harness();
     h.state_mut().open_field_props("city", 0);
     h.run_steps(2);
-    let widget = |h: &Harness<'static, PdfCraftApp>| {
+    let widget = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         let f = s.session.get(s.views[0].id).unwrap().form.iter().find(|f| f.name == "city").unwrap();
         f.widgets[0].clone()
@@ -418,7 +418,7 @@ fn choice_alignment(kind: pdfcraft_engine::NewField, label: &str, quadding: i64)
     h.state_mut()
         .apply_edit(Edit::SetFieldProps { name: "aligned_choice".into(), props: Box::new(FieldProps { quadding: Some(2), ..Default::default() }) });
     h.state_mut().apply_edit(Edit::SetFieldValue { name: "aligned_choice".into(), value: FieldValue::Choice(vec!["Two".into()]) });
-    let field = |h: &Harness<'static, PdfCraftApp>| {
+    let field = |h: &Harness<'static, PdfromeoApp>| {
         let app = h.state();
         app.session.get(app.views[0].id).unwrap().form.iter().find(|f| f.name == "aligned_choice").unwrap().clone()
     };
@@ -495,7 +495,7 @@ fn the_fields_panel_orders_tabs_manually() {
     h.state_mut().execute("form.prepare");
     h.state_mut().set_option("panel", "fields").unwrap();
     h.run_steps(3);
-    let order = |h: &Harness<'static, PdfCraftApp>| -> Vec<String> {
+    let order = |h: &Harness<'static, PdfromeoApp>| -> Vec<String> {
         let s = h.state();
         let form = &s.session.get(s.views[0].id).unwrap().form;
         let mut v: Vec<(usize, String)> = form.iter().filter_map(|f| f.widgets.iter().map(|w| w.tab).min().map(|t| (t, f.name.clone()))).collect();
@@ -557,8 +557,8 @@ fn aligning_distributing_and_sizing_several_fields() {
         });
     }
     h.run_steps(2);
-    let form = |h: &Harness<'static, PdfCraftApp>| h.state().session.get(h.state().views[0].id).unwrap().form.as_ref().clone();
-    let rect = |h: &Harness<'static, PdfCraftApp>, n: &str| form(h).iter().find(|f| f.name == n).unwrap().widgets[0].rect;
+    let form = |h: &Harness<'static, PdfromeoApp>| h.state().session.get(h.state().views[0].id).unwrap().form.as_ref().clone();
+    let rect = |h: &Harness<'static, PdfromeoApp>, n: &str| form(h).iter().find(|f| f.name == n).unwrap().widgets[0].rect;
     let a = ("a".to_string(), 0);
     let others = vec![("b".to_string(), 0), ("c".to_string(), 0)];
     // Align tops with a.
@@ -627,7 +627,7 @@ fn preview_fills_the_form_and_locked_fields_keep_their_properties() {
     h.run_steps(1);
     h.get_by_label("OK").click();
     h.run_steps(3);
-    let locked = |h: &Harness<'static, PdfCraftApp>| {
+    let locked = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().form.iter().find(|f| f.name == "city").unwrap().locked()
     };
@@ -714,7 +714,7 @@ fn actions_tab_adds_and_removes_actions() {
 
 /// Text field table: pick the tool and drag out an area in the empty lower part of page 1, 200 by
 /// 120 points from (40, 240) as displayed. The table's window opens for it.
-fn draw_table(h: &mut Harness<'static, PdfCraftApp>) {
+fn draw_table(h: &mut Harness<'static, PdfromeoApp>) {
     assert!(h.state_mut().execute("form.add.text_table"));
     h.run_steps(2);
     let (a, b) = (at(h, 40.0, 240.0), at(h, 240.0, 360.0));
@@ -1009,11 +1009,11 @@ fn the_calculation_order_is_moved_dragged_and_fixed() {
     h.run_steps(3);
     h.get_by_label("Calculation order").click();
     h.run_steps(3);
-    let order = |h: &Harness<'static, PdfCraftApp>| -> Vec<String> {
+    let order = |h: &Harness<'static, PdfromeoApp>| -> Vec<String> {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().calculation_order().fields.into_iter().map(|f| f.name).collect()
     };
-    let undo_label = |h: &Harness<'static, PdfCraftApp>| h.state().session.get(h.state().views[0].id).unwrap().can_undo().map(str::to_owned);
+    let undo_label = |h: &Harness<'static, PdfromeoApp>| h.state().session.get(h.state().views[0].id).unwrap().can_undo().map(str::to_owned);
     assert_eq!(order(&h), ["total", "sub", "other"]);
     // The card says what is wrong, and each row shows its value as the field does: total
     // calculated before sub, so it still has sub's old value.

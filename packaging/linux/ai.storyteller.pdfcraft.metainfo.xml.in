@@ -5,14 +5,14 @@
   <id>ai.storyteller.pdfcraft</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT OR Apache-2.0</project_license>
-  <name>PdfCraft</name>
+  <name>Pdfromeo</name>
   <summary>Read, organize, combine, split and secure PDFs</summary>
   <developer id="ai.storyteller">
     <name>Learning Machines LLC</name>
   </developer>
   <description>
     <p>
-      PdfCraft is an open-source PDF workbench. Read, comment on, fill in and sign PDFs;
+      Pdfromeo is an open-source PDF workbench. Read, comment on, fill in and sign PDFs;
       organize, combine and split pages; edit, redact, protect and export documents.
     </p>
   </description>
@@ -20,8 +20,8 @@
   <icon type="stock">ai.storyteller.pdfcraft</icon>
   <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
   <url type="homepage">https://getartcraft.com/apps/pdfcraft</url>
-  <url type="bugtracker">https://github.com/storytold/pdfcraft/issues</url>
-  <url type="help">https://github.com/storytold/pdfcraft</url>
+  <url type="bugtracker">https://github.com/romizone/pdfromeo/issues</url>
+  <url type="help">https://github.com/romizone/pdfromeo</url>
   <url type="contact">https://discord.gg/artcraft</url>
   <categories>
     <category>Office</category>
@@ -36,7 +36,7 @@
   <screenshots>
     <screenshot type="default">
       <caption>A PDF open with its threaded comments</caption>
-      <image>https://raw.githubusercontent.com/storytold/pdfcraft/main/docs/images/pdfcraft-viewer.png</image>
+      <image>https://raw.githubusercontent.com/romizone/pdfromeo/main/docs/images/pdfcraft-viewer.png</image>
     </screenshot>
   </screenshots>
   <branding>

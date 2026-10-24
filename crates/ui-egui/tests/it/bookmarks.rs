@@ -3,7 +3,7 @@
 use egui::{Key, Modifiers};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 const PAGES: &[u8] = b"%PDF-1.7
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
@@ -14,9 +14,9 @@ const PAGES: &[u8] = b"%PDF-1.7
 trailer << /Root 1 0 R >>
 %%EOF";
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("pages.pdf", None, PAGES.to_vec()).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -27,7 +27,7 @@ fn harness() -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn outline(h: &Harness<'static, PdfCraftApp>) -> Vec<(String, Option<usize>, usize)> {
+fn outline(h: &Harness<'static, PdfromeoApp>) -> Vec<(String, Option<usize>, usize)> {
     let id = h.state().views[0].id;
     fn flat(items: &[pdfcraft_render::OutlineItem], depth: usize, out: &mut Vec<(String, Option<usize>, usize)>) {
         for i in items {
@@ -41,12 +41,12 @@ fn outline(h: &Harness<'static, PdfCraftApp>) -> Vec<(String, Option<usize>, usi
 }
 
 /// The inline rename editor (the text field, not its inner text run).
-fn field<'a>(h: &'a Harness<'static, PdfCraftApp>, value: &'a str) -> egui_kittest::Node<'a> {
+fn field<'a>(h: &'a Harness<'static, PdfromeoApp>, value: &'a str) -> egui_kittest::Node<'a> {
     h.query_all_by_value(value).next().unwrap_or_else(|| panic!("no editor showing {value:?}"))
 }
 
 /// Add a bookmark with ⌘B at the current page and name it by typing.
-fn add(h: &mut Harness<'static, PdfCraftApp>, title: &str) {
+fn add(h: &mut Harness<'static, PdfromeoApp>, title: &str) {
     h.key_press_modifiers(Modifiers::COMMAND, Key::B);
     h.run_steps(3);
     field(h, "Untitled"); // the inline editor is open and focused
@@ -58,7 +58,7 @@ fn add(h: &mut Harness<'static, PdfCraftApp>, title: &str) {
     h.run_steps(3);
 }
 
-fn menu(h: &mut Harness<'static, PdfCraftApp>, bookmark: &str, item: &str) {
+fn menu(h: &mut Harness<'static, PdfromeoApp>, bookmark: &str, item: &str) {
     h.get_by_label(bookmark).click_secondary();
     h.run_steps(2);
     h.get_by_label(item).click();
@@ -99,7 +99,7 @@ fn new_rename_reorder_indent_delete_and_undo() {
 }
 
 /// The side panel's width as egui keeps it from one frame to the next.
-fn panel_width(h: &Harness<'static, PdfCraftApp>) -> f32 {
+fn panel_width(h: &Harness<'static, PdfromeoApp>) -> f32 {
     h.ctx.data(|data| data.get_temp::<egui::Rect>(egui::Id::new("pdfcraft-inspector-body"))).expect("the inspector body is shown").width()
 }
 
@@ -257,7 +257,7 @@ fn expanding_and_collapsing_all_bookmarks() {
         h.state_mut().apply_edit(Edit::AddBookmark { parent, index: 0, title: title.into(), page: 0, left: None, top: None });
     }
     h.run_steps(3);
-    let shown = |h: &Harness<'static, PdfCraftApp>, t: &str| h.query_by_label(t).is_some();
+    let shown = |h: &Harness<'static, PdfromeoApp>, t: &str| h.query_by_label(t).is_some();
     h.get_by_label("Bookmark options").click();
     h.run_steps(2);
     h.get_by_label("Expand all bookmarks").click();
@@ -281,12 +281,12 @@ fn expanding_and_collapsing_all_bookmarks() {
 fn style_and_colour_from_the_bookmark_menu() {
     let mut h = harness();
     add(&mut h, "Intro");
-    let look = |h: &Harness<'static, PdfCraftApp>| {
+    let look = |h: &Harness<'static, PdfromeoApp>| {
         let id = h.state().views[0].id;
         let b = &h.state().session.get(id).unwrap().info.outline[0];
         (b.bold, b.italic, b.color)
     };
-    let submenu = |h: &mut Harness<'static, PdfCraftApp>, menu: &str, item: &str| {
+    let submenu = |h: &mut Harness<'static, PdfromeoApp>, menu: &str, item: &str| {
         h.get_by_label("Intro").click_secondary();
         h.run_steps(2);
         // A submenu's button carries its arrow.

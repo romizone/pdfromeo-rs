@@ -6,7 +6,7 @@ use pdfcraft_engine::catalog::{self, Availability, TOOL_GROUPS, ToolGroup, ToolI
 use pdfcraft_render::{DocInfo, FieldKind, OutlineItem};
 
 use crate::theme::{self, Tokens};
-use crate::{LeftPanel, PdfCraftApp, RightPanel, icons, widgets};
+use crate::{LeftPanel, PdfromeoApp, RightPanel, icons, widgets};
 
 const COLLAPSED_TOOLS: usize = 14;
 
@@ -14,7 +14,7 @@ fn hue(g: &ToolGroup) -> Color32 {
     Color32::from_rgb(g.hue[0], g.hue[1], g.hue[2])
 }
 
-pub fn left_panel(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
+pub fn left_panel(app: &mut PdfromeoApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     // Organize closed another way (the grid's Close, or a page opened from it) closes the tool too,
     // as its panel's Close does, back to the workspace's own panel.
@@ -62,7 +62,7 @@ pub(crate) fn panel_header(ui: &mut egui::Ui, t: &Tokens, title: &str, back: Opt
     (go_back, close)
 }
 
-fn all_tools(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
+fn all_tools(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens) {
     let (_, close) = panel_header(ui, t, "All tools", None);
     if close {
         app.left_open = false;
@@ -149,7 +149,7 @@ fn tool_row(ui: &mut egui::Ui, t: &Tokens, g: &ToolGroup) -> egui::Response {
     theme::hand(resp).on_hover_text(tip)
 }
 
-fn tool_detail(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens, g: &'static ToolGroup) {
+fn tool_detail(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens, g: &'static ToolGroup) {
     if g.id == "edit" {
         edit_panel(app, ui, t, g);
         return;
@@ -292,7 +292,7 @@ const EDIT_OTHER_TOOLS: [&str; 3] = ["combine", "redact", "form"];
 /// Add content with the rarer items under More; and Other options, the neighbouring tools.
 /// Edit text & images itself is on the floating toolbar, and on from the moment Edit opens.
 /// Every item comes from the catalogue, so its label, icon and availability have one source.
-fn edit_panel(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens, g: &'static ToolGroup) {
+fn edit_panel(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens, g: &'static ToolGroup) {
     let items = || g.sections.iter().flat_map(|s| s.items.iter());
     let item = |command: &str| items().find(|i| i.command == command);
     let mut run = None;
@@ -403,7 +403,7 @@ fn edit_panel(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens, g: &'static 
 
 /// A tool entry with further commands (Add / Update / Remove): a caret at `caret` says it opens a
 /// menu, and each command is enabled by its own needs. Returns the command chosen.
-fn actions_menu(app: &PdfCraftApp, ui: &egui::Ui, resp: &egui::Response, item: &ToolItem, caret: egui::Pos2, color: Color32) -> Option<&'static str> {
+fn actions_menu(app: &PdfromeoApp, ui: &egui::Ui, resp: &egui::Response, item: &ToolItem, caret: egui::Pos2, color: Color32) -> Option<&'static str> {
     ui.painter().add(egui::Shape::convex_polygon(
         vec![caret + vec2(-3.5, -2.0), caret + vec2(3.5, -2.0), caret + vec2(0.0, 2.5)],
         color,
@@ -448,7 +448,7 @@ fn edit_row(ui: &mut egui::Ui, t: &Tokens, icon: &str, label: &str, availability
 
 /// Add a stamp: Dynamic, Sign Here and Standard Business stamps; click one, then click on the
 /// page to place it.
-fn stamp_palette(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
+fn stamp_palette(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens) {
     use pdfcraft_engine::{StampGroup, StampKind};
     ui.label(egui::RichText::new(tl!("Choose a stamp, then click on the page to place it.")).small().color(t.text_faint));
     egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
@@ -518,7 +518,7 @@ fn stamp_palette(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
 
 /// Edit a PDF ▸ Format text: for the selected added text (one undoable change), or the style
 /// new text gets.
-fn format_section(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
+fn format_section(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens) {
     // Editing a paragraph of existing text: its formatting, applied as it changes.
     if let Some((i, _)) = app.active_ids()
         && let Some(ed) = app.views[i].line_editor.clone()
@@ -620,7 +620,7 @@ fn added_text_format(ui: &mut egui::Ui, t: &Tokens, style: &mut pdfcraft_engine:
     }
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Apply the open paragraph's formatting as one change; the paragraph stays open.
     pub(crate) fn apply_line_format(&mut self, index: usize, mut ed: crate::edit_text_ui::LineEditor, ctx: Option<&egui::Context>) {
         let edit = pdfcraft_engine::Edit::EditTextBlock { page: ed.page, block: ed.block, text: ed.text.clone(), style: ed.style() };
@@ -648,7 +648,7 @@ pub(crate) enum Nav {
     Flash(usize, [f32; 4]),
 }
 
-pub fn right_panel(app: &mut PdfCraftApp, ui: &mut egui::Ui) {
+pub fn right_panel(app: &mut PdfromeoApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let Some((index, id)) = app.active_ids() else { return };
     let Some(panel) = app.right else { return };

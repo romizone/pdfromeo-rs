@@ -3,15 +3,15 @@
 use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
-use pdfcraft_ui_egui::{Dialog, PdfCraftApp};
+use pdfcraft_ui_egui::{Dialog, PdfromeoApp};
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     harness_with_settings(None)
 }
 
-fn harness_with_settings(settings: Option<String>) -> Harness<'static, PdfCraftApp> {
+fn harness_with_settings(settings: Option<String>) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         if let Some(json) = &settings {
             app.restore(json);
@@ -48,7 +48,7 @@ fn current_print_page_saves_the_viewed_page_when_labels_restart() {
     }
     bytes.extend_from_slice(format!("trailer << /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n", objects.len() + 1).as_bytes());
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("labelled.pdf", None, bytes).unwrap();
         app
@@ -337,7 +337,7 @@ fn the_picked_printer_is_kept_for_the_next_print_while_it_is_listed() {
         let names = source.lock().map(|n| n.clone()).unwrap_or_default();
         names.into_iter().map(|name| Printer { name: name.into(), default: name == "Front Desk", two_sided: None }).collect()
     }));
-    let open = |h: &mut Harness<'static, PdfCraftApp>| {
+    let open = |h: &mut Harness<'static, PdfromeoApp>| {
         h.state_mut().dialog = None;
         assert!(h.state_mut().execute("print.dialog"));
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
@@ -378,7 +378,7 @@ fn the_picked_printer_is_kept_for_the_next_print_while_it_is_listed() {
 #[test]
 fn architectural_page_can_be_matched_at_100_percent() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1000.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         let bytes = app.session.create_blank(2592.0, 1728.0, 1).unwrap();
         app.open_bytes("architectural.pdf", None, bytes.as_ref().clone()).unwrap();
@@ -624,14 +624,14 @@ fn printer_options_are_read_off_the_gui_thread_and_a_dead_read_offers_nothing() 
     }));
     assert!(h.state_mut().execute("print.dialog"));
     h.run_steps(2);
-    let ask = |h: &mut Harness<'static, PdfCraftApp>, printer: &str| {
+    let ask = |h: &mut Harness<'static, PdfromeoApp>, printer: &str| {
         let d = &mut h.state_mut().print_draft;
         d.driver_options = None;
         d.driver_options_loading = Some(printer.into());
         d.read_options_for = Some(printer.into());
         d.show_driver_options = true;
     };
-    let settle = |h: &mut Harness<'static, PdfCraftApp>| {
+    let settle = |h: &mut Harness<'static, PdfromeoApp>| {
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
         while h.state().print_draft.driver_options_loading.is_some() && std::time::Instant::now() < deadline {
             h.run_steps(1);
@@ -717,7 +717,7 @@ fn print_restricted_documents_say_so_before_the_dialog() {
     .unwrap();
     let bytes = pdfcraft_cos::write_full(&doc, &Default::default()).unwrap();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("restricted.pdf", None, bytes).unwrap();
         app
@@ -739,7 +739,7 @@ fn print_restricted_documents_say_so_before_the_dialog() {
 #[test]
 fn print_without_a_document_does_not_blame_security() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app
     });
@@ -779,7 +779,7 @@ fn paper_choice_survives_cancel_and_settings_restore() {
     let saved = h.state().persist();
     let json: serde_json::Value = serde_json::from_str(&saved).unwrap();
     assert_eq!(json["print_paper"], "A4", "store the canonical name, not its position");
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.restore(&saved);
     let expected = pdfcraft_ui_egui::PrintDraft { paper: a4, ..Default::default() };
     assert_eq!(app.print_draft, expected, "no other print preference becomes persistent");
@@ -807,7 +807,7 @@ fn paper_choice_survives_cancel_and_settings_restore() {
 fn paper_restore_accepts_canonical_names_and_ignores_invalid_settings() {
     use pdfcraft_engine::print::PAPERS;
     for (index, (name, _)) in PAPERS.iter().enumerate() {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.restore(&serde_json::json!({"print_paper": name}).to_string());
         assert_eq!(app.print_draft.paper, index);
         assert_eq!(serde_json::from_str::<serde_json::Value>(&app.persist()).unwrap()["print_paper"], *name);
@@ -827,7 +827,7 @@ fn paper_restore_accepts_canonical_names_and_ignores_invalid_settings() {
         r#"{"print_paper":18446744073709551615}"#,
         r#"{"print_paper":1e100}"#,
     ] {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         let factory = app.print_draft.paper;
         app.restore(invalid);
         assert_eq!(app.print_draft.paper, factory, "{invalid}");
@@ -836,7 +836,7 @@ fn paper_restore_accepts_canonical_names_and_ignores_invalid_settings() {
         app.restore(invalid);
         assert_eq!(app.print_draft.paper, selected, "invalid input must not replace a valid choice: {invalid}");
     }
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.print_draft.paper = usize::MAX;
     assert_eq!(serde_json::from_str::<serde_json::Value>(&app.persist()).unwrap()["print_paper"], serde_json::Value::Null);
 }

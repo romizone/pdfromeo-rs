@@ -5,7 +5,7 @@ use egui::{Align, Layout};
 use pdfcraft_engine::pdfa::{Issue, Level};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, widgets};
+use crate::{PdfromeoApp, widgets};
 
 /// The dialog's state: the chosen level and the last result.
 #[derive(Clone, Debug, PartialEq)]
@@ -21,7 +21,7 @@ impl Default for PdfaState {
     }
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     pub fn pdfa_verify(&mut self) {
         let Some((_, id)) = self.active_ids() else { return };
         let level = self.pdfa.level;
@@ -46,7 +46,7 @@ impl PdfCraftApp {
 }
 
 /// Returns `true` to close.
-pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> bool {
+pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> bool {
     ui.label(egui::RichText::new("PDF/A").font(theme::semibold(18.0)));
     ui.add_space(6.0);
     let declared = app.active_ids().and_then(|(_, id)| app.session.get(id)).map(|d| d.standards()).unwrap_or_default();

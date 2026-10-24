@@ -142,7 +142,7 @@ fn every_tool_creates_a_drawable_comment() {
 }
 
 /// #260 (page 7): Acrobat draws an Ink annotation as a smooth curve through its `/InkList`
-/// points, where PdfCraft drew straight segments between them. Three or more points now make a
+/// points, where Pdfromeo drew straight segments between them. Three or more points now make a
 /// Catmull-Rom spline through every point (as cubic Béziers); two points stay a line, one a dot.
 #[test]
 fn ink_strokes_are_smooth_curves_through_their_points() {
@@ -1636,7 +1636,7 @@ fn note_drawing(name: Option<&str>, color: [f64; 3]) -> Vec<u8> {
 }
 
 /// ISO 32000-2 §12.5.6.4, Table 175: a viewer shall provide icons for the seven standard names,
-/// and may support more. Each of the fourteen names PdfCraft offers draws a shape of its own, so
+/// and may support more. Each of the fourteen names Pdfromeo offers draws a shape of its own, so
 /// a note shows the icon it names; a name it doesn't know, and a note without one, draw `Note`
 /// (the table's default).
 #[test]

@@ -294,12 +294,12 @@ impl Workspace {
     }
 }
 
-fn sync(workspace: &mut Workspace, app: &crate::PdfCraftApp) -> Result<(), String> {
+fn sync(workspace: &mut Workspace, app: &crate::PdfromeoApp) -> Result<(), String> {
     workspace.set_visible(Panel::Tools, app.left_open)?;
     workspace.set_visible(Panel::Inspector, app.right.is_some())
 }
 
-fn drain_reveals(workspace: &mut Workspace, app: &mut crate::PdfCraftApp) {
+fn drain_reveals(workspace: &mut Workspace, app: &mut crate::PdfromeoApp) {
     for panel in std::mem::take(&mut app.pending_panel_reveals) {
         if workspace.layout.contains(&panel) {
             let _ = workspace.apply(Action::Activate { panel });
@@ -307,7 +307,7 @@ fn drain_reveals(workspace: &mut Workspace, app: &mut crate::PdfCraftApp) {
     }
 }
 
-fn publish_visibility(app: &mut crate::PdfCraftApp, workspace: &Workspace) {
+fn publish_visibility(app: &mut crate::PdfromeoApp, workspace: &Workspace) {
     app.left_open = workspace.layout.contains(&Panel::Tools);
     if !workspace.layout.contains(&Panel::Inspector) {
         if app.right.is_some() {
@@ -318,7 +318,7 @@ fn publish_visibility(app: &mut crate::PdfCraftApp, workspace: &Workspace) {
     }
 }
 
-pub fn command(app: &mut crate::PdfCraftApp, reset: bool, params: &Value) -> Result<Value, String> {
+pub fn command(app: &mut crate::PdfromeoApp, reset: bool, params: &Value) -> Result<Value, String> {
     let mut workspace = app.docking.clone();
     if reset {
         workspace = Workspace::default();
@@ -366,7 +366,7 @@ fn saved_split_path(saved: &Layout<Panel>, rendered: &Layout<Panel>, path: &[boo
     None
 }
 
-pub fn show(app: &mut crate::PdfCraftApp, ui: &mut egui::Ui) {
+pub fn show(app: &mut crate::PdfromeoApp, ui: &mut egui::Ui) {
     let t = crate::theme::Tokens::get(ui.ctx());
     let mut workspace = std::mem::take(&mut app.docking);
     if let Err(error) = workspace.validate().and_then(|()| sync(&mut workspace, app)) {

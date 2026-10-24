@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 
-use crate::PdfCraftApp;
+use crate::PdfromeoApp;
 
 /// How often unsaved changes are written to the recovery folder.
 pub const AUTOSAVE_SECS: f64 = 60.0;
@@ -164,8 +164,8 @@ impl RecoveryStore {
     }
 
     /// `Recovery` in the portable data folder in portable mode ([`crate::portable`]), otherwise
-    /// the platform's per-user data folder: `~/Library/Application Support/PdfCraft/Recovery`
-    /// (macOS), `%LOCALAPPDATA%\PdfCraft\Recovery` (Windows), or
+    /// the platform's per-user data folder: `~/Library/Application Support/Pdfromeo/Recovery`
+    /// (macOS), `%LOCALAPPDATA%\Pdfromeo\Recovery` (Windows), or
     /// `$XDG_DATA_HOME/pdfcraft/recovery` / `~/.local/share/pdfcraft/recovery` (others).
     pub fn default_dir() -> Option<PathBuf> {
         if let Some(dir) = crate::portable::data_dir() {
@@ -173,9 +173,9 @@ impl RecoveryStore {
         }
         let env = |k: &str| std::env::var_os(k).filter(|v| !v.is_empty()).map(PathBuf::from);
         if cfg!(target_os = "macos") {
-            env("HOME").map(|h| h.join("Library/Application Support/PdfCraft/Recovery"))
+            env("HOME").map(|h| h.join("Library/Application Support/Pdfromeo/Recovery"))
         } else if cfg!(windows) {
-            env("LOCALAPPDATA").map(|d| d.join("PdfCraft").join("Recovery"))
+            env("LOCALAPPDATA").map(|d| d.join("Pdfromeo").join("Recovery"))
         } else {
             env("XDG_DATA_HOME").or_else(|| env("HOME").map(|h| h.join(".local/share"))).map(|d| d.join("pdfcraft/recovery"))
         }
@@ -280,7 +280,7 @@ fn now_secs() -> u64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Turn on autosave into `store`, and look for documents a previous session left behind.
     pub fn enable_recovery(&mut self, store: RecoveryStore) {
         store.claim();
@@ -441,7 +441,7 @@ mod idle_tests {
         }
     }
 
-    fn frame(app: &mut PdfCraftApp, ctx: &egui::Context, now: f64) -> Duration {
+    fn frame(app: &mut PdfromeoApp, ctx: &egui::Context, now: f64) -> Duration {
         let mut out = ctx.run_ui(egui::RawInput { time: Some(now), ..Default::default() }, |ui| {
             app.autosave_tick(ui.ctx(), now);
         });
@@ -454,7 +454,7 @@ mod idle_tests {
     fn idle_dirty_document_requests_its_deadline_and_writes_without_input() {
         let dir = TestDir::new();
         let store = RecoveryStore::new(dir.path());
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.enable_recovery(store.clone());
         let bytes = app.session.create_blank(200.0, 300.0, 1).unwrap();
         let id = app.session.open_new("Untitled.pdf", bytes).unwrap();
@@ -479,7 +479,7 @@ mod idle_tests {
     fn second_edit_after_autosave_schedules_next_deadline_and_updates_snapshot() {
         let dir = TestDir::new();
         let store = RecoveryStore::new(dir.path());
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.enable_recovery(store.clone());
         let bytes = app.session.create_blank(200.0, 300.0, 1).unwrap();
         let id = app.session.open_new("Untitled.pdf", bytes).unwrap();
@@ -526,7 +526,7 @@ mod idle_tests {
     fn clean_documents_and_disabled_recovery_do_not_schedule_autosave() {
         for recovery_enabled in [false, true] {
             let dir = TestDir::new();
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             if recovery_enabled {
                 app.enable_recovery(RecoveryStore::new(dir.path()));
             }

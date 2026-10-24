@@ -420,11 +420,11 @@ fn add_page_resources(doc: &mut Document, page: &pdfcraft_model::Page, opacity: 
     Ok(())
 }
 
-const WRAP_OPEN: &[u8] = b"q %PdfCraft\n";
+const WRAP_OPEN: &[u8] = b"q %Pdfromeo\n";
 /// Starts with an end of line, so a comment left open at the end of the content before it
 /// can't swallow the `Q`. Older files have the close without it.
-const WRAP_CLOSE: &[u8] = b"\nQ %PdfCraft\n";
-const OLD_WRAP_CLOSE: &[u8] = b"Q %PdfCraft\n";
+const WRAP_CLOSE: &[u8] = b"\nQ %Pdfromeo\n";
+const OLD_WRAP_CLOSE: &[u8] = b"Q %Pdfromeo\n";
 
 /// Whether `bytes` are a wrapper's close: canonical `EMC` closures, then the existing
 /// graphics closures. Legacy closes without the leading newline remain valid on their own.
@@ -452,7 +452,7 @@ fn wrapper_role(doc: &Document, o: &Object) -> Option<bool> {
         return None;
     }
     let Object::Stream(stream) = &*doc.resolve(o) else { return None };
-    // Wrappers are a few bytes; one that decodes to more isn't PdfCraft's.
+    // Wrappers are a few bytes; one that decodes to more isn't Pdfromeo's.
     let bytes = stream.decoded_within(64 * 1024).ok()?;
     if bytes == WRAP_OPEN { Some(true) } else { is_wrap_close(&bytes).then_some(false) }
 }
@@ -484,7 +484,7 @@ enum Isolation {
     /// The content parses cleanly with balanced `q`/`Q` and closed text objects and paths.
     /// `suffix`: the stream from which the content leaves graphics state set (or a comment open)
     /// that a mark on top must not inherit, so it needs a wrapper from there to the end.
-    /// `wrappers`: PdfCraft wrapper pairs (open, close) as stream indexes.
+    /// `wrappers`: Pdfromeo wrapper pairs (open, close) as stream indexes.
     /// `marked`: unfinished marked-content sequences to close before a new mark.
     Clean { suffix: Option<usize>, wrappers: Vec<(usize, usize)>, marked: usize },
     /// The content could not be read that precisely (it doesn't decode, is too large, or has
@@ -577,7 +577,7 @@ fn isolation(doc: &Document, list: &[Object]) -> Isolation {
             b"q" if op.operands.is_empty() && stack.len() < ISOLATION_MAX_DEPTH => stack.push(first),
             b"Q" if op.operands.is_empty() => match stack.pop() {
                 Some(open) => {
-                    // Only a standalone PdfCraft wrapper pair may later be removed again.
+                    // Only a standalone Pdfromeo wrapper pair may later be removed again.
                     let wrap = |i: usize| list.get(i).is_some_and(|o| stream_tag(doc, o).as_deref() == Some("Wrap"));
                     if wrap(open)
                         && wrap(first)
@@ -612,7 +612,7 @@ fn place(doc: &mut Document, page: &pdfcraft_model::Page, kind: MarkKind, conten
 
 /// Put content on a page, tagged `tag` (see [`place`]). On top, whatever graphics state the
 /// content before leaves set (a `cm`, a clip, text state…) must not reach the mark, including
-/// content appended after an earlier PdfCraft wrapper by another tool (#3084): the stretch of
+/// content appended after an earlier Pdfromeo wrapper by another tool (#3084): the stretch of
 /// content that leaves state set is wrapped in q/Q, once. Any known unfinished marked-content
 /// sequences are closed at the end too, so hidden optional content cannot hide the new mark; when
 /// their number is unknown, nothing is placed on top. Returns the new content stream.

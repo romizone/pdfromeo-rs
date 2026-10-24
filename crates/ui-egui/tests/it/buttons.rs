@@ -2,7 +2,7 @@
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::{Dialog, PdfCraftApp};
+use pdfcraft_ui_egui::{Dialog, PdfromeoApp};
 
 /// Two pages; page 1 has a text field "name" (filled), a Reset button, a Next page button and a
 /// Print button (a JavaScript one-liner).
@@ -33,7 +33,7 @@ fn fixture() -> Vec<u8> {
     out
 }
 
-fn click_field(h: &mut Harness<'static, PdfCraftApp>, name: &str) {
+fn click_field(h: &mut Harness<'static, PdfromeoApp>, name: &str) {
     let p = {
         let s = h.state();
         let doc = s.session.get(s.views[0].id).unwrap();
@@ -56,7 +56,7 @@ fn buttons_reset_navigate_and_print() {
     std::fs::write(&path, fixture()).unwrap();
     let path_str = path.to_string_lossy().into_owned();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("buttons.pdf", Some(path_str), fixture()).unwrap();
         app.set_option("zoom", "150").unwrap();
@@ -73,7 +73,7 @@ fn buttons_reset_navigate_and_print() {
     assert_eq!(h.state().dialog, Some(Dialog::Print), "this.print() opens the Print dialog");
     h.state_mut().dialog = None;
     h.run_steps(2);
-    // A document's Save named action never writes the file unasked (PdfCraft's XFA buttons
+    // A document's Save named action never writes the file unasked (Pdfromeo's XFA buttons
     // use SaveAs, which opens the Save As dialog, as a script's `execMenuItem` does): the
     // reset above made the document dirty, and the click leaves it so.
     let before = std::fs::read(&path).unwrap();
@@ -113,7 +113,7 @@ fn show_hide_fixture() -> Vec<u8> {
 }
 
 /// Whether the "name" widget (object 4) has the Hidden annotation flag in the saved document.
-fn name_hidden(h: &Harness<'static, PdfCraftApp>) -> bool {
+fn name_hidden(h: &Harness<'static, PdfromeoApp>) -> bool {
     let s = h.state();
     let bytes = s.session.save_bytes(s.views[0].id).unwrap();
     let doc = pdfcraft_cos::Document::open(bytes).unwrap();
@@ -124,7 +124,7 @@ fn name_hidden(h: &Harness<'static, PdfCraftApp>) -> bool {
 #[test]
 fn hide_actions_hide_and_show_fields() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("show-hide.pdf", None, show_hide_fixture()).unwrap();
         app.set_option("zoom", "150").unwrap();

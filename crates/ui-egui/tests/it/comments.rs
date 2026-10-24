@@ -5,7 +5,7 @@ use egui::{Pos2, pos2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_render::Annotation;
-use pdfcraft_ui_egui::{PdfCraftApp, QuickTool};
+use pdfcraft_ui_egui::{PdfromeoApp, QuickTool};
 
 use crate::support;
 
@@ -25,13 +25,13 @@ endstream endobj
 trailer << /Root 1 0 R >>
 %%EOF";
 
-fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
+fn harness(setup: impl FnOnce(&mut PdfromeoApp) + 'static) -> Harness<'static, PdfromeoApp> {
     harness_with_bytes(TEXT_FIXTURE.to_vec(), setup)
 }
 
-fn harness_with_bytes(bytes: Vec<u8>, setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
+fn harness_with_bytes(bytes: Vec<u8>, setup: impl FnOnce(&mut PdfromeoApp) + 'static) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("text.pdf", None, bytes).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -44,7 +44,7 @@ fn harness_with_bytes(bytes: Vec<u8>, setup: impl FnOnce(&mut PdfCraftApp) + 'st
     h
 }
 
-fn settle(h: &mut Harness<'static, PdfCraftApp>) {
+fn settle(h: &mut Harness<'static, PdfromeoApp>) {
     for _ in 0..200 {
         h.run_steps(2);
         if !h.state().render_pending() {
@@ -55,12 +55,12 @@ fn settle(h: &mut Harness<'static, PdfCraftApp>) {
 }
 
 /// A point on page 1 in PDF user space → screen (no rotation; MediaBox 300×200).
-fn at(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32) -> Pos2 {
+fn at(h: &Harness<'static, PdfromeoApp>, x: f32, y: f32) -> Pos2 {
     let r = h.state().views[0].page_screen_rect(0).expect("page 1 on screen");
     pos2(r.left() + x / 300.0 * r.width(), r.top() + (200.0 - y) / 200.0 * r.height())
 }
 
-fn drag(h: &mut Harness<'static, PdfCraftApp>, from: Pos2, to: Pos2) {
+fn drag(h: &mut Harness<'static, PdfromeoApp>, from: Pos2, to: Pos2) {
     h.hover_at(from);
     h.run_steps(1);
     h.drag_at(from);
@@ -73,7 +73,7 @@ fn drag(h: &mut Harness<'static, PdfCraftApp>, from: Pos2, to: Pos2) {
     h.run_steps(3);
 }
 
-fn click(h: &mut Harness<'static, PdfCraftApp>, p: Pos2) {
+fn click(h: &mut Harness<'static, PdfromeoApp>, p: Pos2) {
     h.hover_at(p);
     h.run_steps(1);
     h.drag_at(p);
@@ -83,23 +83,23 @@ fn click(h: &mut Harness<'static, PdfCraftApp>, p: Pos2) {
 }
 
 /// Drag between two page points (user space).
-fn drag_pt(h: &mut Harness<'static, PdfCraftApp>, a: (f32, f32), b: (f32, f32)) {
+fn drag_pt(h: &mut Harness<'static, PdfromeoApp>, a: (f32, f32), b: (f32, f32)) {
     let (a, b) = (at(h, a.0, a.1), at(h, b.0, b.1));
     drag(h, a, b);
 }
 
 /// Click a page point (user space).
-fn click_pt(h: &mut Harness<'static, PdfCraftApp>, p: (f32, f32)) {
+fn click_pt(h: &mut Harness<'static, PdfromeoApp>, p: (f32, f32)) {
     let p = at(h, p.0, p.1);
     click(h, p);
 }
 
 /// A text field by its placeholder ("Add a comment", "Add a reply").
-fn field<'a>(h: &'a Harness<'static, PdfCraftApp>, placeholder: &'a str) -> egui_kittest::Node<'a> {
+fn field<'a>(h: &'a Harness<'static, PdfromeoApp>, placeholder: &'a str) -> egui_kittest::Node<'a> {
     h.query_all_by(|n| n.placeholder() == Some(placeholder)).next().unwrap_or_else(|| panic!("no field {placeholder:?}"))
 }
 
-fn comments(h: &Harness<'static, PdfCraftApp>) -> Vec<Annotation> {
+fn comments(h: &Harness<'static, PdfromeoApp>) -> Vec<Annotation> {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().info.annotations.clone()
 }
@@ -286,17 +286,17 @@ fn a_new_highlight_opens_its_note_for_typing() {
 }
 
 /// The Comments panel's editor for a comment's note (the reply field is the other multiline one).
-fn note_editor<'a>(h: &'a Harness<'static, PdfCraftApp>) -> egui_kittest::Node<'a> {
+fn note_editor<'a>(h: &'a Harness<'static, PdfromeoApp>) -> egui_kittest::Node<'a> {
     h.query_all_by(|n| n.role() == egui::accesskit::Role::MultilineTextInput && n.placeholder() != Some("Add a reply")).next().expect("note editor")
 }
 
 /// The text in the open note editor.
-fn note(h: &Harness<'static, PdfCraftApp>) -> Option<String> {
+fn note(h: &Harness<'static, PdfromeoApp>) -> Option<String> {
     h.state().views[0].comments.editing.as_ref().map(|(_, _, text)| text.clone())
 }
 
 /// A letter key as a keyboard sends it: the key goes down, types its letter and comes up.
-fn type_key(h: &mut Harness<'static, PdfCraftApp>, key: egui::Key, letter: &str) {
+fn type_key(h: &mut Harness<'static, PdfromeoApp>, key: egui::Key, letter: &str) {
     h.key_down(key);
     h.event(egui::Event::Text(letter.into()));
     h.key_up(key);
@@ -304,7 +304,7 @@ fn type_key(h: &mut Harness<'static, PdfCraftApp>, key: egui::Key, letter: &str)
 }
 
 /// Highlight glyphs `from..to` of page 1's text with the highlighter.
-fn highlight_text(h: &mut Harness<'static, PdfCraftApp>, from: usize, to: usize) {
+fn highlight_text(h: &mut Harness<'static, PdfromeoApp>, from: usize, to: usize) {
     let (a, b) = {
         let v = &h.state().views[0];
         (v.glyph_screen_pos(0, from).expect("text layer"), v.glyph_screen_pos(0, to).expect("glyph"))
@@ -590,7 +590,7 @@ fn shapes_and_ink_are_drawn_by_dragging() {
 /// Press, drag and release a stroke, running only one frame after the release. Finished
 /// renders are held back from the view (`hold_rasters`), so the raster the commit asks for can't
 /// arrive before the test looks, however fast it renders; a test lets it through by clearing it.
-fn stroke_without_settling(h: &mut Harness<'static, PdfCraftApp>, a: (f32, f32), b: (f32, f32)) {
+fn stroke_without_settling(h: &mut Harness<'static, PdfromeoApp>, a: (f32, f32), b: (f32, f32)) {
     h.state_mut().views[0].hold_rasters = true;
     let (from, to) = (at(h, a.0, a.1), at(h, b.0, b.1));
     h.hover_at(from);
@@ -676,13 +676,13 @@ fn sticky_note_composer_posts_and_returns_to_select() {
 }
 
 /// The rectangle of the comment whose text starts with `text`.
-fn rect_of(h: &Harness<'static, PdfCraftApp>, text: &str) -> [f32; 4] {
+fn rect_of(h: &Harness<'static, PdfromeoApp>, text: &str) -> [f32; 4] {
     let c = comments(h);
     c.iter().find(|a| a.contents.as_deref().is_some_and(|t| t.starts_with(text))).unwrap_or_else(|| panic!("no comment {text:?}: {c:?}")).rect
 }
 
 /// Post `text` in the open text box composer.
-fn post_text(h: &mut Harness<'static, PdfCraftApp>, text: &str) {
+fn post_text(h: &mut Harness<'static, PdfromeoApp>, text: &str) {
     field(h, "Type text").type_text(text);
     h.run_steps(2);
     h.get_by_label("Post").click();
@@ -755,7 +755,7 @@ fn a_dragged_text_box_follows_a_rotated_view() {
         h.state_mut().set_option("zoom", "150").unwrap();
         h.run_steps(3);
         settle(&mut h);
-        let screen = |h: &Harness<'static, PdfCraftApp>, x: f32, y: f32| {
+        let screen = |h: &Harness<'static, PdfromeoApp>, x: f32, y: f32| {
             let r = h.state().views[0].page_screen_rect(0).expect("page 1 on screen");
             let (u, v) = (x / 300.0, (200.0 - y) / 200.0);
             let (a, b) = if rotation == 90 { (1.0 - v, u) } else { (v, 1.0 - u) };
@@ -817,7 +817,7 @@ fn line_ends_are_dragged_to_change_length_and_angle() {
     drag_pt(&mut h, (40.0, 100.0), (140.0, 100.0));
     let line = comments(&h).into_iter().find(|a| a.subtype == "Line").expect("a line");
     assert_eq!(line.points.len(), 2);
-    let ends = |h: &Harness<'static, PdfCraftApp>| comments(h).into_iter().find(|a| a.index == line.index).unwrap().points;
+    let ends = |h: &Harness<'static, PdfromeoApp>| comments(h).into_iter().find(|a| a.index == line.index).unwrap().points;
     // With the line tool, a drag from the end just drawn draws another line.
     let first = ends(&h);
     drag_pt(&mut h, (first[1][0], first[1][1]), (140.0, 40.0));
@@ -908,7 +908,7 @@ fn the_panel_posts_comments_and_replies() {
 }
 
 /// The side panel's width as egui keeps it from one frame to the next.
-fn panel_width(h: &Harness<'static, PdfCraftApp>) -> f32 {
+fn panel_width(h: &Harness<'static, PdfromeoApp>) -> f32 {
     h.ctx.data(|data| data.get_temp::<egui::Rect>(egui::Id::new("pdfcraft-inspector-body"))).expect("the inspector body is shown").width()
 }
 
@@ -1018,7 +1018,7 @@ fn shapes_take_a_fill_colour_from_the_quick_bar_and_properties() {
     assert_eq!(h.state().comment_prefs.style(CommentTool::Line).fill, None);
     h.run_steps(2);
     drag_pt(&mut h, (40.0, 100.0), (140.0, 40.0));
-    let fill_of = |h: &Harness<'static, PdfCraftApp>, index: usize| {
+    let fill_of = |h: &Harness<'static, PdfromeoApp>, index: usize| {
         let s = h.state();
         let doc = s.session.get(s.views[0].id).unwrap();
         let p = doc.comment_props(0, index).unwrap();
@@ -1226,7 +1226,7 @@ fn page_groups_collapse_and_expand() {
     }
     h.state_mut().views[0].comments.selected = None;
     h.run_steps(3);
-    let shown = |h: &Harness<'static, PdfCraftApp>, text: &str| h.query_all_by_label_contains(text).count() > 0;
+    let shown = |h: &Harness<'static, PdfromeoApp>, text: &str| h.query_all_by_label_contains(text).count() > 0;
     assert!(shown(&h, "First page note") && shown(&h, "Second page note"));
     assert_eq!(h.query_all_by_label("Collapse").count(), 2, "one chevron per page group");
 
@@ -1388,7 +1388,7 @@ fn polygons_clouds_connected_lines_callouts_and_inserted_text() {
     assert_eq!(h.state().quick_tool, QuickTool::Select);
 }
 
-fn drawn_points(h: &Harness<'static, PdfCraftApp>) -> usize {
+fn drawn_points(h: &Harness<'static, PdfromeoApp>) -> usize {
     match &h.state().views[0].comments.gesture {
         Some(pdfcraft_ui_egui::comments::Gesture::Draw { points, .. }) => points.len(),
         _ => 0,
@@ -1477,7 +1477,7 @@ fn the_panel_filters_by_colour_and_checkmark() {
     });
     h.state_mut().apply_edit(pdfcraft_engine::Edit::MarkAnnotation { page: 0, index: 0, marked: true, author: "Tester".into() });
     h.run_steps(2);
-    let cards = |h: &Harness<'static, PdfCraftApp>| (h.query_all_by_label("Rectangle").count(), h.query_all_by_label("Oval").count());
+    let cards = |h: &Harness<'static, PdfromeoApp>| (h.query_all_by_label("Rectangle").count(), h.query_all_by_label("Oval").count());
     // The filter menu lists the colours by name (counted with it open: it names the types too).
     h.get_by_label("Filter comments").click();
     h.run_steps(2);
@@ -1520,7 +1520,7 @@ fn make_current_properties_default() {
     // The default survives a restart (#340): a fresh app reads the persisted settings and its
     // next rectangle still takes the style.
     let json = h.state().persist();
-    let mut fresh = PdfCraftApp::new();
+    let mut fresh = PdfromeoApp::new();
     fresh.restore(&json);
     let st = fresh.comment_prefs.style(pdfcraft_ui_egui::comments::CommentTool::Rectangle);
     assert_eq!((st.color, st.opacity, st.width), ([0.0, 0.47, 0.84], 0.5, 5.0), "the tool default persisted");
@@ -1569,7 +1569,7 @@ fn properties_dialog_makes_the_strikethrough_colour_default() {
     let st = h.state().comment_prefs.style(CommentTool::StrikeOut);
     assert_eq!((st.color, st.opacity), (green, 0.1));
     let fresh = {
-        let mut fresh = PdfCraftApp::new();
+        let mut fresh = PdfromeoApp::new();
         fresh.restore(&h.state().persist());
         fresh.comment_prefs.style(CommentTool::StrikeOut).color
     };
@@ -1716,9 +1716,9 @@ fn attachment_comment_fixture() -> Vec<u8> {
     out
 }
 
-fn attachment_harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
+fn attachment_harness(setup: impl FnOnce(&mut PdfromeoApp) + 'static) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("annexed.pdf", None, attachment_comment_fixture()).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -1730,7 +1730,7 @@ fn attachment_harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness
     h
 }
 
-fn open_tab_names(h: &Harness<'static, PdfCraftApp>) -> Vec<String> {
+fn open_tab_names(h: &Harness<'static, PdfromeoApp>) -> Vec<String> {
     let s = h.state();
     s.views.iter().filter_map(|v| s.session.get(v.id)).map(|d| d.name.clone()).collect()
 }
@@ -1773,7 +1773,7 @@ fn an_attachment_comment_opens_its_file_from_the_card_menu() {
 }
 
 /// Drag with the middle button (the mouse wheel) in small steps.
-fn middle_drag(h: &mut Harness<'static, PdfCraftApp>, from: Pos2, to: Pos2) {
+fn middle_drag(h: &mut Harness<'static, PdfromeoApp>, from: Pos2, to: Pos2) {
     let button = |pos, pressed| egui::Event::PointerButton { pos, button: egui::PointerButton::Middle, pressed, modifiers: egui::Modifiers::NONE };
     h.event(egui::Event::PointerMoved(from));
     h.run_steps(1);
@@ -1857,7 +1857,7 @@ fn the_eraser_rubs_as_wide_as_its_thickness_setting() {
 }
 
 /// The widths of the eraser preview's strokes drawn in the last frame.
-fn eraser_preview_widths(h: &Harness<'static, PdfCraftApp>) -> Vec<f32> {
+fn eraser_preview_widths(h: &Harness<'static, PdfromeoApp>) -> Vec<f32> {
     fn walk(shape: &egui::Shape, out: &mut Vec<f32>) {
         let preview = egui::Color32::from_gray(128).gamma_multiply(0.35);
         match shape {
@@ -1906,7 +1906,7 @@ fn hovering_a_comment_shows_its_author_and_text() {
         "8 0 obj << /Type /Annot /Subtype /Square /Rect [50 50 150 120] /C [1 0 0] /T (Ada) /Contents (Check this figure) >> endobj\ntrailer",
     );
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("hover.pdf", None, pdf.into_bytes()).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -1937,7 +1937,7 @@ fn preference_hides_author_only_highlight_hover_previews() {
         "8 0 obj << /Type /Annot /Subtype /Highlight /Rect [50 50 150 120] /C [1 1 0] /T (Ada) /QuadPoints [50 120 150 120 50 50 150 50] >> endobj\ntrailer",
     );
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("highlight_hover.pdf", None, pdf.into_bytes()).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -1978,12 +1978,12 @@ fn markup_hover_fixture(subtype: &str, rotation: u16, extra: &str, refs: &str) -
         .into_bytes()
 }
 
-fn markup_hover_harness(pdf: Vec<u8>, view_rotation: u16) -> Harness<'static, PdfCraftApp> {
+fn markup_hover_harness(pdf: Vec<u8>, view_rotation: u16) -> Harness<'static, PdfromeoApp> {
     // Give the fixture a complete xref so byte comparisons do not measure repair-on-save.
     let doc = pdfcraft_cos::Document::open(std::sync::Arc::new(pdf)).expect("synthetic fixture parses");
     let pdf = pdfcraft_cos::write_full(&doc, &Default::default()).expect("writes complete fixture");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("markup.pdf", None, pdf).expect("opens synthetic markup");
         app.set_option("left", "closed").unwrap();
@@ -1997,7 +1997,7 @@ fn markup_hover_harness(pdf: Vec<u8>, view_rotation: u16) -> Harness<'static, Pd
 }
 
 /// Includes the document's crop/rotation and the independent Rotate View transform.
-fn hover_markup_at(h: &mut Harness<'static, PdfCraftApp>, x: f32, y: f32) {
+fn hover_markup_at(h: &mut Harness<'static, PdfromeoApp>, x: f32, y: f32) {
     let p = {
         let app = h.state();
         let v = &app.views[0];
@@ -2182,7 +2182,7 @@ fn a_closed_comments_panel_stays_closed_when_picking_comment_tools() {
         h.run_steps(2);
         assert_eq!(h.state().right, None, "{tool} reopened the closed Comments panel");
     }
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.restore(&h.state().persist());
     assert!(again.comments_panel_closed, "the choice survives a restart");
     // Opening it again from the rail lets the tools open it once more.
@@ -2299,7 +2299,7 @@ fn text_comments_can_save_a_zero_width_default() {
     h.state_mut().comment_prefs.set_width(CommentTool::Rectangle, 0.0);
     assert_eq!(h.state().comment_prefs.style(CommentTool::Callout).width, 0.0);
     assert_eq!(h.state().comment_prefs.style(CommentTool::Rectangle).width, 0.5);
-    let mut restored = PdfCraftApp::new();
+    let mut restored = PdfromeoApp::new();
     restored.restore(&h.state().persist());
     assert_eq!(restored.comment_prefs.style(CommentTool::TextBox).width, 0.0);
     assert_eq!(restored.comment_prefs.style(CommentTool::Callout).width, 0.0);

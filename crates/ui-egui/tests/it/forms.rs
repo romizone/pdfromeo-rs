@@ -2,11 +2,11 @@
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, include_bytes!("../data/form.pdf").to_vec()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -24,13 +24,13 @@ fn harness() -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn value(h: &Harness<'static, PdfCraftApp>, name: &str) -> Vec<String> {
+fn value(h: &Harness<'static, PdfromeoApp>, name: &str) -> Vec<String> {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().form.iter().find(|f| f.name == name).unwrap().value.clone()
 }
 
 /// Click the centre of a field's widget.
-fn click_field(h: &mut Harness<'static, PdfCraftApp>, name: &str, widget: usize) {
+fn click_field(h: &mut Harness<'static, PdfromeoApp>, name: &str, widget: usize) {
     let p = {
         let s = h.state();
         let doc = s.session.get(s.views[0].id).unwrap();
@@ -40,7 +40,7 @@ fn click_field(h: &mut Harness<'static, PdfCraftApp>, name: &str, widget: usize)
     click_at(h, p);
 }
 
-fn click_at(h: &mut Harness<'static, PdfCraftApp>, p: egui::Pos2) {
+fn click_at(h: &mut Harness<'static, PdfromeoApp>, p: egui::Pos2) {
     h.hover_at(p);
     h.run_steps(1);
     h.drag_at(p);
@@ -50,7 +50,7 @@ fn click_at(h: &mut Harness<'static, PdfCraftApp>, p: egui::Pos2) {
 }
 
 /// Rest the pointer on the centre of a field's widget long enough for a tooltip.
-fn rest_on_field(h: &mut Harness<'static, PdfCraftApp>, name: &str) {
+fn rest_on_field(h: &mut Harness<'static, PdfromeoApp>, name: &str) {
     let p = {
         let s = h.state();
         let doc = s.session.get(s.views[0].id).unwrap();
@@ -79,7 +79,7 @@ fn hovering_a_field_shows_its_tooltip() {
 }
 
 /// Give the `city` field these properties, as the Properties dialog would.
-fn set_city(h: &mut Harness<'static, PdfCraftApp>, props: pdfcraft_engine::FieldProps) {
+fn set_city(h: &mut Harness<'static, PdfromeoApp>, props: pdfcraft_engine::FieldProps) {
     h.state_mut().apply_edit(pdfcraft_engine::Edit::SetFieldProps { name: "city".into(), props: Box::new(props) });
     h.run_steps(3);
 }
@@ -153,13 +153,13 @@ fn check_boxes_radios_and_choices() {
     assert_eq!(value(&h, "country"), ["fr"]);
 }
 
-fn focused(h: &Harness<'static, PdfCraftApp>) -> Option<(String, usize)> {
+fn focused(h: &Harness<'static, PdfromeoApp>) -> Option<(String, usize)> {
     h.state().views[0].forms.focus.as_ref().map(|f| (f.name.clone(), f.widget))
 }
 
 /// A text field, a check box, another text field and a pair of radio buttons, one under the
 /// other, then two empty pages.
-fn check_box_harness() -> Harness<'static, PdfCraftApp> {
+fn check_box_harness() -> Harness<'static, PdfromeoApp> {
     let bytes = pdf_from_objects(&[
         "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [4 0 R 5 0 R 6 0 R 10 0 R] /DA (/Helv 0 Tf 0 g) /DR << /Font << /Helv 7 0 R >> >> >> >>",
         "<< /Type /Pages /Kids [3 0 R 9 0 R 13 0 R] /Count 3 /MediaBox [0 0 300 400] >>",
@@ -176,7 +176,7 @@ fn check_box_harness() -> Harness<'static, PdfCraftApp> {
         "<< /Type /Page /Parent 2 0 R >>",
     ]);
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("agree.pdf", None, bytes).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -481,7 +481,7 @@ fn lithuanian_calendar_localizes_months_and_weekdays_without_changing_field_valu
 
 /// The value of `name` in a saved PDF, read back by opening it in a fresh app.
 fn saved_value(path: &std::path::Path, name: &str) -> Vec<String> {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     app.open_bytes("saved.pdf", None, std::fs::read(path).unwrap()).unwrap();
     app.session.get(app.views[0].id).unwrap().form.iter().find(|f| f.name == name).unwrap().value.clone()
@@ -489,7 +489,7 @@ fn saved_value(path: &std::path::Path, name: &str) -> Vec<String> {
 
 /// Step frames until the save has written `path`, instead of assuming it is there after a fixed
 /// number of frames. The write is atomic, so the file appears only when it is complete.
-fn wait_for_file(h: &mut Harness<'static, PdfCraftApp>, path: &std::path::Path) {
+fn wait_for_file(h: &mut Harness<'static, PdfromeoApp>, path: &std::path::Path) {
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
     while !path.exists() {
         assert!(std::time::Instant::now() < deadline, "the save never wrote {}", path.display());
@@ -554,7 +554,7 @@ fn tabbing_back_to_the_same_field_then_saving_keeps_the_committed_value() {
             validated_form()
         };
         let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes("tab.pdf", None, bytes).unwrap();
             app.set_option("left", "closed").unwrap();
@@ -626,13 +626,13 @@ fn key(key: egui::Key, modifiers: egui::Modifiers) -> egui::Event {
 }
 
 /// Deliver `events` together, in one frame.
-fn one_frame(h: &mut Harness<'static, PdfCraftApp>, events: Vec<egui::Event>) {
+fn one_frame(h: &mut Harness<'static, PdfromeoApp>, events: Vec<egui::Event>) {
     h.input_mut().events.extend(events);
     h.run_steps(1);
 }
 
 /// Type `text` into field `name`, then press ⌘S in the same frame as `last` (more input).
-fn type_then_save_in_one_frame(h: &mut Harness<'static, PdfCraftApp>, name: &str, text: &str, last: egui::Event, out: &std::path::Path) {
+fn type_then_save_in_one_frame(h: &mut Harness<'static, PdfromeoApp>, name: &str, text: &str, last: egui::Event, out: &std::path::Path) {
     click_field(h, name, 0);
     h.event(egui::Event::Text(text.into()));
     h.run_steps(2);
@@ -705,7 +705,7 @@ fn validated_form() -> Vec<u8> {
 fn pressing_another_text_field_validates_the_refused_value_once() {
     // The press commits `qty`; its release must not commit (and alert) a second time.
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("order.pdf", None, validated_form_with_note()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -790,7 +790,7 @@ fn fields_over_text() -> Vec<u8> {
 #[test]
 fn buttons_over_text_show_the_pointing_hand_not_the_i_beam() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("sheet.pdf", None, fields_over_text()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -807,7 +807,7 @@ fn buttons_over_text_show_the_pointing_hand_not_the_i_beam() {
         };
         (at("agree"), at("strength"), at("background"))
     };
-    let cursor_at = |h: &mut Harness<'static, PdfCraftApp>, p: egui::Pos2| {
+    let cursor_at = |h: &mut Harness<'static, PdfromeoApp>, p: egui::Pos2| {
         h.hover_at(p);
         h.run_steps(2);
         h.output().platform_output.cursor_icon
@@ -840,7 +840,7 @@ fn a_rejected_value_keeps_the_typing_and_stops_the_save() {
     let dir = scratch("rejected");
     let out = dir.join("saved.pdf");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("order.pdf", None, validated_form()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -896,7 +896,7 @@ fn refused_value_stops_save(commit_key: egui::Key, case: &str) {
     let dir = scratch(case);
     let out = dir.join("saved.pdf");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("order.pdf", None, validated_form()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -1127,7 +1127,7 @@ fn the_fields_panel_lists_a_field_on_a_missing_page_as_unplaced() {
         "<< /Type /Annot /Subtype /Widget /FT /Tx /T (orphan) /Rect [10 10 100 30] /P 99 /F 4 >>",
     ]);
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("orphan.pdf", None, bytes).unwrap();
         app.set_option("panel", "fields").unwrap();
@@ -1149,7 +1149,7 @@ fn list_box_clicks_select_directly_and_ctrl_click_toggles_multi() {
         "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
     ]);
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("lists.pdf", None, bytes).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -1222,9 +1222,9 @@ fn auto_size_form() -> Vec<u8> {
     ])
 }
 
-fn auto_size_harness() -> Harness<'static, PdfCraftApp> {
+fn auto_size_harness() -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("auto.pdf", None, auto_size_form()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -1237,7 +1237,7 @@ fn auto_size_harness() -> Harness<'static, PdfCraftApp> {
 
 /// The on-screen size for `text` in the field, and how wide (single-line) or tall (multiline,
 /// wrapped at the box) that text is in the screen font, against the room inside the box (pt).
-fn on_screen_fit(h: &Harness<'static, PdfCraftApp>, name: &str, text: &str) -> (f32, f32, f32) {
+fn on_screen_fit(h: &Harness<'static, PdfromeoApp>, name: &str, text: &str) -> (f32, f32, f32) {
     let s = h.state();
     let f = s.session.get(s.views[0].id).unwrap().form.iter().find(|f| f.name == name).unwrap().clone();
     let w = f.widgets[0].clone();
@@ -1276,7 +1276,7 @@ fn auto_size_fields_shrink_and_wrap_typed_text_to_fit_their_box() {
 }
 
 /// Where a mode bar tab is, by its label.
-fn mode_tab(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
+fn mode_tab(h: &Harness<'static, PdfromeoApp>, label: &str) -> egui::Rect {
     use egui_kittest::kittest::Queryable;
     h.get_all_by_role_and_label(egui::accesskit::Role::Button, label).map(|n| n.rect()).find(|r| r.bottom() < 120.0).expect("a mode tab")
 }
@@ -1285,10 +1285,10 @@ fn mode_tab(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
 /// tab it lies under: with the All tools panel closed, Edit, Convert and E-Sign (the name field
 /// starts right of All tools).
 fn mode_tab_cursors(
-    h: &mut Harness<'static, PdfCraftApp>,
-    what: impl Fn(&Harness<'static, PdfCraftApp>) -> egui::Rect,
+    h: &mut Harness<'static, PdfromeoApp>,
+    what: impl Fn(&Harness<'static, PdfromeoApp>) -> egui::Rect,
 ) -> [(&'static str, egui::CursorIcon); 3] {
-    let page = |h: &Harness<'static, PdfCraftApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
+    let page = |h: &Harness<'static, PdfromeoApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
     let y = what(h).center().y - page(h).top();
     let tabs = mode_tab(h, "Convert").center().y;
     h.state_mut().views[0].goto = Some((0, 0.0));
@@ -1317,7 +1317,7 @@ fn mode_tabs_keep_the_hand_over_a_text_field_scrolled_under_them() {
     // The page across the window, so the name field reaches under the tabs.
     h.state_mut().views[0].fit = pdfcraft_ui_egui::canvas::Fit::Width;
     h.run_steps(4);
-    let name = |h: &Harness<'static, PdfCraftApp>| {
+    let name = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         let doc = s.session.get(s.views[0].id).unwrap();
         let f = doc.form.iter().find(|f| f.name == "name").unwrap();

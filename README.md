@@ -1,3 +1,41 @@
+# Pdfromeo
+
+**Pdfromeo** is a fork of [PdfCraft](https://github.com/storytold/pdfcraft), the open-source,
+pure-Rust PDF reader and editor, renamed and packaged for **macOS** and **Android**.
+
+## Download
+
+Get the latest build from [Releases](https://github.com/romizone/pdfromeo/releases):
+
+| Platform | File | Notes |
+|---|---|---|
+| macOS (Apple Silicon) | `pdfromeo-<version>-macos-aarch64.dmg` | Ad-hoc signed, not notarized: the first time, right-click **Pdfromeo.app ▸ Open**, or run `xattr -dr com.apple.quarantine /Applications/Pdfromeo.app`. |
+| Android 8.0+ | `pdfromeo-<version>-android.apk` | The browser build of the app in a WebView. Allow "Install unknown apps" for your browser or file manager. Open PDFs from the app's Open command or with **Open with ▸ Pdfromeo**; Save asks where to write the file. |
+
+## Build it yourself
+
+```bash
+# macOS DMG (needs Rust)
+packaging/macos/package.sh --arch aarch64
+# Android APK (needs Rust + wasm32 target, trunk, a JDK and the Android SDK; see the script header)
+ANDROID_HOME=/path/to/sdk packaging/android/package.sh
+```
+
+Both write to `dist/release/`.
+
+## Differences from PdfCraft
+
+- The app is called Pdfromeo (window titles, menus, bundle id `io.github.romizone.pdfromeo`).
+- Help ▸ Check for updates looks at this repository's releases.
+- `packaging/android/`: a small WebView shell that runs `apps/pdfcraft-web` as an Android app.
+  Printing and features that need a desktop file system (folders, watched files) are not
+  available on Android.
+
+Pdfromeo keeps PdfCraft's licence (MIT OR Apache-2.0) and credits; all credit for the engine and
+the app goes to the PdfCraft authors. The original README follows.
+
+---
+
 <p align="center">
   <a href="https://getartcraft.com/">
     <picture>

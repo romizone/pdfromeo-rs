@@ -3,7 +3,7 @@
 use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 fn fixture() -> Vec<u8> {
     let objs = [
@@ -26,7 +26,7 @@ fn fixture() -> Vec<u8> {
     out
 }
 
-fn card(h: &Harness<'_, PdfCraftApp>, id: &str) -> egui::Rect {
+fn card(h: &Harness<'_, PdfromeoApp>, id: &str) -> egui::Rect {
     h.ctx.data(|d| d.get_temp(egui::Id::new(id).with("card"))).unwrap_or_else(|| panic!("missing dialog card {id}"))
 }
 
@@ -47,7 +47,7 @@ fn protected() -> Vec<u8> {
 #[test]
 fn document_properties_fields_are_tall_and_inset() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("doc.pdf", None, fixture()).unwrap();
         app.set_option("dialog", "properties").unwrap();
@@ -67,7 +67,7 @@ fn document_properties_fields_are_tall_and_inset() {
 #[test]
 fn password_prompt_field_is_tall_and_inset() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("secret.pdf", None, protected()).unwrap();
         app
@@ -86,7 +86,7 @@ fn password_prompt_field_is_tall_and_inset() {
 fn document_properties_long_filename_does_not_overflow_card() {
     let long_name = "Global_sociology_introducing_five_contemporary_societies_Schneider_Linda_Silverman_Arnold_2000_Boston_isbn13_9780072294309_hash_3d2960a9212a8573bba2536e91f36e59_archive_copy.pdf";
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes(long_name, None, fixture()).unwrap();
         app.set_option("dialog", "properties").unwrap();

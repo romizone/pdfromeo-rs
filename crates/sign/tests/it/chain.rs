@@ -258,9 +258,9 @@ fn the_signer_certificate_must_allow_document_signing() {
     let unknown = "1.2.3.4.5.6";
     assert!(problem(&[ext(unknown, &der::octets(&[0]))]).is_some_and(|w| w.message.contains(unknown)));
     assert!(problem(&[der::seq(&[&der::oid(unknown), &der::octets(&der::octets(&[0]))])]).is_none());
-    // Critical extensions PdfCraft knows, or may accept as they are, don't refuse.
+    // Critical extensions Pdfromeo knows, or may accept as they are, don't refuse.
     assert!(problem(&[ext("2.5.29.32", &der::seq(&[]))]).is_none());
-    // No extensions at all, and the digital IDs PdfCraft creates, may sign.
+    // No extensions at all, and the digital IDs Pdfromeo creates, may sign.
     assert!(issue("Plain", Some(&r), FOREVER, &[]).cert.signing_problem().is_none());
     let key = PrivateKey::generate_p256().unwrap();
     let name = Name::build("Own ID", "", "", "", "US");
@@ -341,7 +341,7 @@ fn an_unreadable_extended_key_usage_allows_no_purpose() {
     assert_eq!(status, Status::Valid, "{details:?}");
 }
 
-/// A CA certificate with a critical extension PdfCraft does not enforce (here name constraints)
+/// A CA certificate with a critical extension Pdfromeo does not enforce (here name constraints)
 /// vouches for nothing: what that extension limits would go unchecked. A self-signed root's
 /// extensions are the trust store's business, so such a root still anchors.
 #[test]

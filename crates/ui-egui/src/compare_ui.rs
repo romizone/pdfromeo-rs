@@ -7,7 +7,7 @@ use pdfcraft_engine::DocId;
 use pdfcraft_engine::compare::{Comparison, Kind};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, RightPanel, widgets};
+use crate::{PdfromeoApp, RightPanel, widgets};
 
 /// The last comparison.
 pub struct CompareState {
@@ -49,7 +49,7 @@ pub fn colour(kind: Kind) -> Color32 {
 }
 
 /// The Compare Files dialog: pick the older document. Returns (compare, cancel).
-pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> (bool, bool) {
     ui.label(egui::RichText::new(tl!("Compare Files")).font(theme::semibold(18.0)));
     ui.add_space(8.0);
     let Some((_, new)) = app.active_ids() else { return (false, true) };
@@ -175,7 +175,7 @@ pub(crate) fn panel(ui: &mut egui::Ui, t: &Tokens, state: &Option<CompareState>,
     action
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Set gaps for the active document and both visible comparison panes, leaving other tabs alone.
     pub(crate) fn set_active_page_gaps(&mut self, show: bool) {
         let Some((index, id)) = self.active_ids() else { return };
@@ -285,7 +285,7 @@ impl PdfCraftApp {
     }
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Shade the comparison on the new file's pages (view `index`) and, when it is open, the old
     /// file's, with the kinds of change the filter shows.
     fn shade_compare(&mut self, index: usize) {
@@ -331,7 +331,7 @@ fn shading(s: &CompareState, old: bool) -> Vec<(usize, [f32; 4], Color32)> {
 
 /// The two halves of a side-by-side comparison, as view indexes (old, new), when the active
 /// document is the new file of a comparison shown side by side and the old file is open too.
-pub(crate) fn side_by_side(app: &PdfCraftApp, index: usize) -> Option<(usize, usize)> {
+pub(crate) fn side_by_side(app: &PdfromeoApp, index: usize) -> Option<(usize, usize)> {
     let c = app.compare.as_ref().filter(|c| c.side_by_side)?;
     let new = app.views.get(index).filter(|v| v.id == c.new)?;
     let old = app.views.iter().position(|v| v.id == c.old)?;
@@ -341,7 +341,7 @@ pub(crate) fn side_by_side(app: &PdfCraftApp, index: usize) -> Option<(usize, us
 /// Side by side: the old file on the left, the new on the right, each a page view of its own
 /// with its shading, scrolled and zoomed together. The half the pointer is over leads; the
 /// other follows its zoom, layout and scroll offset.
-pub(crate) fn compare_area(app: &mut PdfCraftApp, old: usize, new: usize, ui: &mut egui::Ui) {
+pub(crate) fn compare_area(app: &mut PdfromeoApp, old: usize, new: usize, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let rect = ui.available_rect_before_wrap();
     let gap = 1.0;
@@ -387,7 +387,7 @@ pub(crate) fn compare_area(app: &mut PdfCraftApp, old: usize, new: usize, ui: &m
     // Drawing a half can close its own tab (its snapshot bar's Close, #3915), which shifts or
     // removes the indexes below. Each half is found again by id, and the frame stops when one is gone.
     let ids = [app.views[old].id, app.views[new].id];
-    let find = |app: &PdfCraftApp, id| app.views.iter().position(|v| v.id == id);
+    let find = |app: &PdfromeoApp, id| app.views.iter().position(|v| v.id == id);
     ui.painter().vline(rect.min.x + half_w, rect.y_range(), egui::Stroke::new(gap, t.border));
     for (k, r) in [left, right].into_iter().enumerate() {
         // Both halves must still be open: once either has closed, the pair is over.

@@ -8,7 +8,7 @@ use egui::{Key, Modifiers};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
 use pdfcraft_render::{PageRenderer, RenderRequest, RequestKind};
-use pdfcraft_ui_egui::{CloseRequest, Dialog, OpenOutcome, PdfCraftApp};
+use pdfcraft_ui_egui::{CloseRequest, Dialog, OpenOutcome, PdfromeoApp};
 
 use crate::gpu;
 
@@ -38,13 +38,13 @@ fn fixture(n: usize) -> Vec<u8> {
     out
 }
 
-fn harness(pages: usize, setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
+fn harness(pages: usize, setup: impl FnOnce(&mut PdfromeoApp) + 'static) -> Harness<'static, PdfromeoApp> {
     let mut builder = Harness::builder().with_size(egui::vec2(1400.0, 900.0));
     if std::env::var_os("PDFCRAFT_ORGANIZE_SNAPSHOT").is_some() {
         builder = builder.wgpu();
     }
     let mut h = builder.build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("doc.pdf", None, fixture(pages)).expect("fixture opens");
         setup(&mut app);
@@ -54,18 +54,18 @@ fn harness(pages: usize, setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harn
     h
 }
 
-fn organize(pages: usize) -> Harness<'static, PdfCraftApp> {
+fn organize(pages: usize) -> Harness<'static, PdfromeoApp> {
     harness(pages, |app| app.set_option("organize", "on").unwrap())
 }
 
 /// Organize pages ▸ Insert ▸ `item`.
-fn insert_menu(h: &mut Harness<'static, PdfCraftApp>, item: &str) {
+fn insert_menu(h: &mut Harness<'static, PdfromeoApp>, item: &str) {
     h.get_by_label("Insert").click();
     h.run_steps(2);
     h.get_by_label(item).click();
 }
 
-fn type_selection(h: &mut Harness<'static, PdfCraftApp>, text: &str) {
+fn type_selection(h: &mut Harness<'static, PdfromeoApp>, text: &str) {
     use egui::accesskit::Role;
     h.get_by_role_and_label(Role::TextInput, "Selected pages").click();
     h.run_steps(1);
@@ -165,7 +165,7 @@ fn organize_tool_opens_the_overview_directly_and_can_be_reentered() {
 #[test]
 fn organize_opens_on_the_current_page() {
     let mut h = harness(60, |_| {});
-    let in_view = |h: &Harness<'static, PdfCraftApp>, page: usize| {
+    let in_view = |h: &Harness<'static, PdfromeoApp>, page: usize| {
         let viewport = h.state().views[0].viewport_rect();
         let label = format!("Page {}", page + 1);
         h.query_by_label(&label).is_some_and(|n| viewport.contains_rect(n.rect()))
@@ -208,7 +208,7 @@ fn organize_opens_on_the_current_page() {
 
 #[test]
 fn organize_tool_chosen_before_opening_a_document_shows_its_pages() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("tool", "organize").unwrap();
     app.open_bytes("doc.pdf", None, fixture(3)).unwrap();
     assert!(app.views[0].organize);
@@ -239,7 +239,7 @@ fn organize_page_actions_rotate_only_the_named_page_and_undo() {
     h.run_steps(2);
     h.get_by_label("Rotate page 1 clockwise").click();
     h.run_steps(3);
-    let rotations = |h: &Harness<'static, PdfCraftApp>| {
+    let rotations = |h: &Harness<'static, PdfromeoApp>| {
         h.state().session.get(h.state().views[0].id).unwrap().info.pages.iter().map(|p| p.rotation).collect::<Vec<_>>()
     };
     assert_eq!(rotations(&h), [90, 0, 0]);
@@ -294,7 +294,7 @@ fn organize_local_actions_respect_document_permissions() {
 }
 
 /// Page labels of the active document, read back from its current bytes.
-fn page_texts(app: &PdfCraftApp) -> Vec<String> {
+fn page_texts(app: &PdfromeoApp) -> Vec<String> {
     let doc = app.session.get(app.views[0].id).unwrap();
     let mut r = PageRenderer::new(doc.bytes.clone(), Default::default());
     (0..r.page_count())
@@ -305,7 +305,7 @@ fn page_texts(app: &PdfCraftApp) -> Vec<String> {
         .collect()
 }
 
-fn dirty(h: &Harness<'static, PdfCraftApp>) -> bool {
+fn dirty(h: &Harness<'static, PdfromeoApp>) -> bool {
     let app = h.state();
     app.session.get(app.views[0].id).is_some_and(|d| d.dirty)
 }
@@ -636,7 +636,7 @@ fn the_save_prompt_answers_to_the_keyboard() {
 }
 
 /// An organize harness with a dirty document and the "Save changes?" prompt open.
-fn dirty_prompt() -> Harness<'static, PdfCraftApp> {
+fn dirty_prompt() -> Harness<'static, PdfromeoApp> {
     let mut h = organize(2);
     h.get_by_label("Rotate clockwise").click();
     h.run_steps(3);
@@ -647,7 +647,7 @@ fn dirty_prompt() -> Harness<'static, PdfCraftApp> {
 }
 
 /// The prompt has Save chosen on arrival; `keys` then move the choice and Enter or Space presses it.
-fn press_after(keys: &[(Modifiers, Key)], activate: Key) -> Harness<'static, PdfCraftApp> {
+fn press_after(keys: &[(Modifiers, Key)], activate: Key) -> Harness<'static, PdfromeoApp> {
     let mut h = dirty_prompt();
     for (m, k) in keys {
         h.key_press_modifiers(*m, *k);
@@ -815,10 +815,10 @@ impl Drop for TempPdfs {
     }
 }
 
-/// The app with Preferences ▸ Reopen the files that were open when PdfCraft last closed on.
-fn session_harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
+/// The app with Preferences ▸ Reopen the files that were open when Pdfromeo last closed on.
+fn session_harness(setup: impl FnOnce(&mut PdfromeoApp) + 'static) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.reopen_last_session = true;
         setup(&mut app);
@@ -828,7 +828,7 @@ fn session_harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'s
     h
 }
 
-fn open_paths(app: &PdfCraftApp) -> Vec<String> {
+fn open_paths(app: &PdfromeoApp) -> Vec<String> {
     app.views.iter().map(|v| app.session.get(v.id).and_then(|d| d.path.clone()).unwrap_or_default()).collect()
 }
 
@@ -876,13 +876,13 @@ fn quitting_with_unsaved_changes_still_remembers_every_file() {
     h.state_mut().active = Some(1);
     h.state_mut().close_request = Some(CloseRequest::Quit);
     h.run_steps(3);
-    // Each unsaved tab closes as it is answered, before PdfCraft quits.
+    // Each unsaved tab closes as it is answered, before Pdfromeo quits.
     for _ in 0..2 {
         h.get_by_label("Don't save").click();
         h.run_steps(3);
     }
     assert!(h.state().views.is_empty());
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.restore(&h.state().persist());
     app.reopen_last_files(&[]);
     assert_eq!(open_paths(&app), files, "both files come back");
@@ -893,21 +893,21 @@ fn quitting_with_unsaved_changes_still_remembers_every_file() {
 fn the_last_session_is_off_by_default_and_skips_missing_and_duplicate_files() {
     let dir = TempPdfs::new("skip");
     let (a, b) = (dir.file("a.pdf", 1), dir.file("b.pdf", 1));
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.open_path(&a);
     app.open_path(&b);
     let off: serde_json::Value = serde_json::from_str(&app.persist()).unwrap();
     assert!(off["last_session"].is_null(), "nothing is kept while the preference is off");
     app.reopen_last_session = true;
     let settings = app.persist();
-    let mut later = PdfCraftApp::new();
+    let mut later = PdfromeoApp::new();
     later.restore(&settings);
     later.reopen_last_session = false;
     later.reopen_last_files(&[]);
     assert!(later.views.is_empty(), "turned off again: nothing reopens");
     // b.pdf is gone, and a.pdf is about to open from the command line.
     std::fs::remove_file(&b).unwrap();
-    let mut later = PdfCraftApp::new();
+    let mut later = PdfromeoApp::new();
     later.restore(&settings);
     later.reopen_last_files(&[a]);
     assert!(later.views.is_empty(), "neither opens from the session");
@@ -934,7 +934,7 @@ fn opening_the_same_path_again_focuses_its_tab() {
 
 #[test]
 fn opening_a_missing_file_fails_and_tells_the_user() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     let missing = std::env::temp_dir().join(format!("pdfcraft-no-such-file-{}.pdf", std::process::id()));
     assert_eq!(app.open_path(&missing.to_string_lossy()), OpenOutcome::Failed);
@@ -1009,7 +1009,7 @@ fn save_prompt_stays_inside_the_screen_for_a_long_filename() {
     let name = "Psychology_ The Science of Mind and Behaviour, -- Nigel Holt, Andy Bremner, Michael \
                 Vliek, Ed Sutherland, -- 5, 2024 -- McGraw-Hill Education (UK) Ltd -- isbn13 97815268.pdf";
     let mut h = Harness::builder().with_size(egui::vec2(1365.0, 719.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes(name, None, fixture(1)).expect("fixture opens");
         app.close_request = Some(CloseRequest::Tab(app.views[0].id));
@@ -1044,7 +1044,7 @@ fn save_prompt_fits_the_smallest_window_whatever_the_name() {
     for name in names {
         let start: String = name.chars().take(10).collect();
         let mut h = Harness::builder().with_size(size).build_eframe(move |_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes(&name, None, fixture(1)).expect("fixture opens");
             app.close_request = Some(CloseRequest::Tab(app.views[0].id));
@@ -1196,7 +1196,7 @@ fn combine_list_does_not_warn_that_a_split_file_collides_with_itself() {
 /// copy keeps the field's name rather than becoming Text1-1.
 #[test]
 fn pasting_pages_into_their_own_document_keeps_field_names() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     app.open_bytes("form.pdf", None, form_pdf("Text1")).unwrap();
     app.views[0].select_pages(&[0]);
@@ -1207,7 +1207,7 @@ fn pasting_pages_into_their_own_document_keeps_field_names() {
     assert!(doc.form.iter().all(|f| f.name == "Text1"), "{:?}", doc.form.iter().map(|f| &f.name).collect::<Vec<_>>());
 }
 
-fn texts_of(app: &PdfCraftApp, tab: usize) -> Vec<String> {
+fn texts_of(app: &PdfromeoApp, tab: usize) -> Vec<String> {
     let doc = app.session.get(app.views[tab].id).unwrap();
     let mut r = PageRenderer::new(doc.bytes.clone(), Default::default());
     (0..r.page_count())
@@ -1369,12 +1369,12 @@ fn alt_arrows_move_the_selected_file() {
     assert_eq!(h.state().combine_selection(), [1]);
 }
 
-fn combine_names(h: &Harness<'static, PdfCraftApp>) -> Vec<String> {
+fn combine_names(h: &Harness<'static, PdfromeoApp>) -> Vec<String> {
     h.state().combine_draft.iter().map(|f| f.name.clone()).collect()
 }
 
 /// Files in the Combine tab's list view (the table: headings, page ranges, row links).
-fn combine_of(names: &[(&str, usize)]) -> Harness<'static, PdfCraftApp> {
+fn combine_of(names: &[(&str, usize)]) -> Harness<'static, PdfromeoApp> {
     let files: Vec<(String, Vec<u8>)> = names.iter().map(|(n, p)| (n.to_string(), fixture(*p))).collect();
     let mut h = harness(1, move |app| {
         app.set_option("combine-view", "list").unwrap();
@@ -1520,7 +1520,7 @@ fn columns_resize_and_the_layout_is_kept_in_the_settings() {
     let size_index = pdfcraft_ui_egui::SortKey::Size as usize;
     assert!(widths[size_index] > 120.0, "{widths:?}");
     let saved = h.state().persist();
-    let mut fresh = PdfCraftApp::new();
+    let mut fresh = PdfromeoApp::new();
     fresh.set_option("language", "en").unwrap();
     fresh.restore(&saved);
     assert_eq!(fresh.combine_columns, h.state().combine_columns);
@@ -1617,7 +1617,7 @@ fn files_that_cannot_be_read_are_listed_and_left_out_once_the_user_agrees() {
     assert_eq!(texts_of(h.state(), 1), ["Page 1", "Page 2", "Page 1"]);
 }
 
-fn type_password(h: &mut Harness<'static, PdfCraftApp>, password: &str) {
+fn type_password(h: &mut Harness<'static, PdfromeoApp>, password: &str) {
     let field = h.get_by_role(Role::PasswordInput);
     field.focus();
     field.type_text(password);
@@ -1898,7 +1898,7 @@ impl egui::DroppedFile for Dropped {
     }
 }
 
-fn drop_files(h: &mut Harness<'static, PdfCraftApp>, files: Vec<Dropped>) {
+fn drop_files(h: &mut Harness<'static, PdfromeoApp>, files: Vec<Dropped>) {
     for f in files {
         h.input_mut().dropped_files.push(std::sync::Arc::new(f));
     }
@@ -1961,7 +1961,7 @@ fn files_dropped_outside_the_page_grid_still_open_as_documents() {
 }
 
 /// The Pages panel's thumbnail of page `label` (the panel is right of the page view).
-fn panel_thumb_rect(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
+fn panel_thumb_rect(h: &Harness<'static, PdfromeoApp>, label: &str) -> egui::Rect {
     h.get_all_by_label(label).map(|n| n.rect()).max_by(|a, b| a.left().total_cmp(&b.left())).unwrap()
 }
 
@@ -2005,14 +2005,14 @@ fn files_dropped_beside_the_pages_panel_still_open_as_documents() {
     assert_eq!(texts_of(h.state(), 1), ["Page 1"], "the dropped PDF opens as its own document");
 }
 
-fn grid_zoom(h: &Harness<'static, PdfCraftApp>) -> f32 {
+fn grid_zoom(h: &Harness<'static, PdfromeoApp>) -> f32 {
     h.state().views[0].grid_zoom()
 }
 
 #[test]
 fn page_grid_zooms_with_its_buttons_keys_and_pinch() {
     let mut h = organize(12);
-    let width = |h: &Harness<'static, PdfCraftApp>| h.get_by_label("Page 2").rect().left() - h.get_by_label("Page 1").rect().left();
+    let width = |h: &Harness<'static, PdfromeoApp>| h.get_by_label("Page 2").rect().left() - h.get_by_label("Page 1").rect().left();
     let usual = width(&h);
     h.get_by_label("Larger pages").click();
     h.run_steps(3);
@@ -2088,7 +2088,7 @@ fn page_grid_size_is_remembered_for_every_document_and_restart() {
 
 #[test]
 fn a_damaged_remembered_page_grid_size_is_ignored_or_clamped() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.restore(r#"{"organize_zoom": "huge"}"#);
     assert_eq!(app.organize_zoom, 1.0);
     app.restore(r#"{"organize_zoom": 40.0}"#);
@@ -2107,7 +2107,7 @@ fn zoomed_pages_in_view_are_rendered_at_the_size_drawn() {
     // The 200 × 300 fixture fits by height; keep its aspect ratio instead of stretching
     // it to the full cell width. Request enough pixels for that actual preview width.
     let drawn = 194.0 * 3.0 * (200.0 / 300.0) * h.ctx.pixels_per_point();
-    let sharp = |h: &Harness<'static, PdfCraftApp>, page| h.state().views[0].grid_page_pixels(page);
+    let sharp = |h: &Harness<'static, PdfromeoApp>, page| h.state().views[0].grid_page_pixels(page);
     for _ in 0..200 {
         if sharp(&h, 0).is_some_and(|w| w as f32 >= drawn * 0.9) {
             break;
@@ -2163,7 +2163,7 @@ fn save_pages_writes_what_the_grid_shows() {
     h.get_by_label("Save pages").click();
     h.run_steps(4);
     assert!(!dirty(&h));
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     app.open_bytes("saved.pdf", None, std::fs::read(&path).unwrap()).unwrap();
     assert_eq!(texts_of(&app, 0), ["Page 1", "Page 3"]);
@@ -2269,7 +2269,7 @@ fn encrypted(bytes: Vec<u8>, algorithm: pdfcraft_cos::Algorithm, user: &str, own
 #[test]
 fn password_prompt_opens_and_security_tab_reports_the_details() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("secret.pdf", None, protected("pw", "owner", -1)).unwrap();
         app
@@ -2299,7 +2299,7 @@ fn the_security_notice_wraps_beside_its_buttons_and_lines_up_with_them() {
     // Wide: one line. Narrower: wrapped. Narrowest: cut short (the full text is on hover).
     for (width, wraps) in [(1700.0, false), (1250.0, true), (900.0, false)] {
         let mut h = Harness::builder().with_size(egui::vec2(width, 800.0)).build_eframe(|_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes("locked.pdf", None, protected("", "owner", 0b0100)).unwrap();
             app.set_option("panel", "bookmarks").unwrap();
@@ -2325,7 +2325,7 @@ fn the_security_notice_wraps_beside_its_buttons_and_lines_up_with_them() {
 #[test]
 fn the_security_notice_unlocks_with_the_permissions_password() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("locked.pdf", None, protected("", "owner", 0b0100)).unwrap();
         app
@@ -2353,7 +2353,7 @@ fn the_security_notice_unlocks_with_the_permissions_password() {
 #[test]
 fn remove_security_asks_for_the_permissions_password_first() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("locked.pdf", None, protected("", "owner", 0b0100)).unwrap();
         app
@@ -2382,7 +2382,7 @@ fn a_secured_form_shows_its_form_notice_and_its_security() {
     // Changing and assembling withheld, filling allowed (as government forms are often set).
     let bytes = encrypted(include_bytes!("../data/form.pdf").to_vec(), pdfcraft_cos::Algorithm::Aes256, "", "owner", -1036);
     let mut h = Harness::builder().with_size(egui::vec2(1600.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, bytes).unwrap();
         app
@@ -2397,7 +2397,7 @@ fn a_secured_form_shows_its_form_notice_and_its_security() {
 #[test]
 fn restricted_documents_show_a_notice_and_block_page_changes() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("locked.pdf", None, protected("", "owner", 0b0100)).unwrap(); // opens without a password
         app.set_option("organize", "on").unwrap();
@@ -2426,9 +2426,9 @@ fn restricted_documents_show_a_notice_and_block_page_changes() {
 /// in. ⌘C, snapshots and exports are refused with a notice; the owner password lifts that.
 #[test]
 fn copying_out_of_a_document_honours_its_security() {
-    fn open(password: &'static str) -> Harness<'static, PdfCraftApp> {
+    fn open(password: &'static str) -> Harness<'static, PdfromeoApp> {
         let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.system_clipboard = false;
             app.open_bytes("no-copy.pdf", None, protected("pw", "owner", -1 ^ 0b1_0000)).unwrap();
@@ -2447,7 +2447,7 @@ fn copying_out_of_a_document_honours_its_security() {
         assert_eq!(h.state().views[0].selected_text().as_deref(), Some("Page 1"));
         h
     }
-    fn copy(h: &mut Harness<'static, PdfCraftApp>) -> bool {
+    fn copy(h: &mut Harness<'static, PdfromeoApp>) -> bool {
         h.state_mut().toast = None;
         h.event(egui::Event::Copy);
         let mut copied = false;
@@ -2457,7 +2457,7 @@ fn copying_out_of_a_document_honours_its_security() {
         }
         copied
     }
-    fn snapshot(h: &mut Harness<'static, PdfCraftApp>) {
+    fn snapshot(h: &mut Harness<'static, PdfromeoApp>) {
         // Around "Page 1", at (20, 150) on the 200 × 300 pt page.
         let r = h.state().views[0].page_screen_rect(0).expect("on screen");
         let at = |x: f32, y: f32| egui::pos2(r.left() + x / 200.0 * r.width(), r.top() + (300.0 - y) / 300.0 * r.height());
@@ -2497,7 +2497,7 @@ fn copying_out_of_a_document_honours_its_security() {
 
 #[test]
 fn replace_pages_dialog_swaps_page_content() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     app.open_bytes("doc.pdf", None, fixture(3)).unwrap();
     app.views[0].select_pages(&[1]);
@@ -2543,7 +2543,7 @@ fn replace_split_selection_keeps_the_unchecked_page() {
         out
     }
     let open = |selected: &[usize], edited: bool| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("original.pdf", None, sized(3, 200, 300, "Original")).unwrap();
         app.views[0].select_pages(selected);
@@ -2555,7 +2555,7 @@ fn replace_split_selection_keeps_the_unchecked_page() {
         h.run_steps(2);
         h
     };
-    let sizes = |app: &PdfCraftApp| {
+    let sizes = |app: &PdfromeoApp| {
         let doc = app.session.get(app.views[0].id).unwrap();
         doc.info.pages.iter().map(|p| (p.width.round() as i32, p.height.round() as i32)).collect::<Vec<_>>()
     };
@@ -2618,7 +2618,7 @@ fn extract_options_and_rotate_pages_dialog() {
 fn dragging_thumbnails_reorders_pages() {
     let mut h = organize(4);
     let before = page_texts(h.state());
-    let grab = |h: &Harness<'static, PdfCraftApp>, label: &str| h.get_by_label(label).rect();
+    let grab = |h: &Harness<'static, PdfromeoApp>, label: &str| h.get_by_label(label).rect();
     let (from, to) = (grab(&h, "Page 1").center(), grab(&h, "Page 3").right_center() - egui::vec2(10.0, 0.0));
     h.hover_at(from);
     h.run_steps(1);
@@ -2640,19 +2640,19 @@ fn dragging_thumbnails_reorders_pages() {
 
 /// A page drag with the copy modifier held — Ctrl (Option on macOS) — instead of none.
 /// Modifiers are input state: `ModifiersChanged` once, as the column-select drag does.
-fn copy_drag(h: &mut Harness<'static, PdfCraftApp>, from: egui::Pos2, to: egui::Pos2) {
+fn copy_drag(h: &mut Harness<'static, PdfromeoApp>, from: egui::Pos2, to: egui::Pos2) {
     page_drag(h, from, to, copy_modifiers(h));
 }
 
 /// The copy modifier of the OS the app reports: Option on macOS, Ctrl elsewhere. That is the OS
 /// the gesture itself reads, so a Mac browser — a wasm build, where `cfg!(target_os = "macos")` is
 /// false — is covered by asking the context rather than the target.
-fn copy_modifiers(h: &Harness<'static, PdfCraftApp>) -> Modifiers {
+fn copy_modifiers(h: &Harness<'static, PdfromeoApp>) -> Modifiers {
     if h.ctx.os() == egui::os::OperatingSystem::Mac { Modifiers::ALT } else { Modifiers::CTRL }
 }
 
 /// Drag the page under `from` to `to` with `modifiers` held for the whole gesture.
-fn page_drag(h: &mut Harness<'static, PdfCraftApp>, from: egui::Pos2, to: egui::Pos2, modifiers: Modifiers) {
+fn page_drag(h: &mut Harness<'static, PdfromeoApp>, from: egui::Pos2, to: egui::Pos2, modifiers: Modifiers) {
     h.event(egui::Event::ModifiersChanged(modifiers));
     h.run_steps(1);
     h.hover_at(from);
@@ -2673,7 +2673,7 @@ fn page_drag(h: &mut Harness<'static, PdfCraftApp>, from: egui::Pos2, to: egui::
 fn dragging_with_the_copy_modifier_copies_the_pages_into_the_gap() {
     let mut h = organize(3);
     let before = page_texts(h.state());
-    let grab = |h: &Harness<'static, PdfCraftApp>, label: &str| h.get_by_label(label).rect();
+    let grab = |h: &Harness<'static, PdfromeoApp>, label: &str| h.get_by_label(label).rect();
     let (from, to) = (grab(&h, "Page 1").center(), grab(&h, "Page 3").right_center() - egui::vec2(10.0, 0.0));
     copy_drag(&mut h, from, to);
     // The original stays first; a copy of page 1 lands after page 3 (#2997).
@@ -2689,8 +2689,8 @@ fn dragging_with_the_copy_modifier_copies_the_pages_into_the_gap() {
 /// there moves the pages instead of copying them (#3092 review).
 #[test]
 fn option_copies_and_ctrl_moves_when_the_context_reports_macos() {
-    let grab = |h: &Harness<'static, PdfCraftApp>, label: &str| h.get_by_label(label).rect();
-    let points = |h: &Harness<'static, PdfCraftApp>| (grab(h, "Page 1").center(), grab(h, "Page 3").right_center() - egui::vec2(10.0, 0.0));
+    let grab = |h: &Harness<'static, PdfromeoApp>, label: &str| h.get_by_label(label).rect();
+    let points = |h: &Harness<'static, PdfromeoApp>| (grab(h, "Page 1").center(), grab(h, "Page 3").right_center() - egui::vec2(10.0, 0.0));
 
     // Ctrl is not the copy modifier on macOS, so that drag moves the page.
     let mut h = organize(3);
@@ -2750,7 +2750,7 @@ fn source_font_fixture_with_text(body: &str) -> Vec<u8> {
         "<< /Type /Font /Subtype /Type1 /BaseFont /Times-BoldItalic >>".into(),
         "<< /Type /Page /Parent 2 0 R /Contents 7 0 R /Resources << /Font << /F1 3 0 R /F2 5 0 R >> >> >>".into(),
         "<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Oblique >>".into(),
-        "<< /Producer (PdfCraft) >>".into(),
+        "<< /Producer (Pdfromeo) >>".into(),
         format!("<< /Length {} >>\nstream\n{body}\nendstream", body.len()),
     ];
     let mut out = b"%PDF-1.7\n".to_vec();
@@ -2768,9 +2768,9 @@ fn source_font_fixture_with_text(body: &str) -> Vec<u8> {
     out
 }
 
-fn open_source_font_fixture() -> Harness<'static, PdfCraftApp> {
+fn open_source_font_fixture() -> Harness<'static, PdfromeoApp> {
     Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("fonts.pdf", None, source_font_fixture()).expect("font fixture opens");
         app
@@ -2865,7 +2865,7 @@ fn switching_from_a_narrow_editor_keeps_one_frame_and_a_wide_heading_on_one_line
         "BT /F1 18 Tf 20 220 Td (Editable PDF heading) Tj ET BT /F2 18 Tf 20 120 Td (Mono) Tj ET BT /F2 18 Tf 20 98 Td (Text) Tj ET",
     );
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("editor.pdf", None, bytes).unwrap();
         app
@@ -2924,7 +2924,7 @@ fn opening_a_paragraph_leaves_the_page_as_it_is() {
     let _gpu = gpu();
     let bytes = source_font_fixture_with_text("0 0 0.45 rg 10 180 280 70 re f 1 1 1 rg BT /F2 20 Tf 20 205 Td (White on a banner) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("banner.pdf", None, bytes).expect("opens");
         app
@@ -2985,7 +2985,7 @@ fn a_quick_click_into_another_paragraph_keeps_both_in_place() {
     let _gpu = gpu();
     let bytes = source_font_fixture_with_text("BT /F1 24 Tf 20 220 Td (Top) Tj ET BT /F2 24 Tf 20 120 Td (Bottom) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("boxes.pdf", None, bytes).expect("opens");
         app
@@ -3051,7 +3051,7 @@ fn a_quick_click_into_another_paragraph_keeps_both_in_place() {
 fn switching_straight_to_another_box_applies_the_open_paragraph() {
     let bytes = source_font_fixture_with_text("BT /F1 24 Tf 20 220 Td (Top) Tj ET BT /F2 24 Tf 20 120 Td (Bottom) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("boxes.pdf", None, bytes).expect("opens");
         app
@@ -3096,7 +3096,7 @@ fn switching_straight_to_another_box_applies_the_open_paragraph() {
 fn text_typed_into_an_open_paragraph_counts_as_unsaved_work() {
     let bytes = source_font_fixture_with_text("BT /F1 24 Tf 20 220 Td (Top) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("box.pdf", None, bytes).expect("opens");
         app
@@ -3146,7 +3146,7 @@ fn an_applied_paragraph_keeps_its_edited_look_until_the_page_is_redrawn() {
     let _gpu = gpu();
     let bytes = source_font_fixture_with_text("BT /F1 24 Tf 20 220 Td (Topmost) Tj ET BT /F2 24 Tf 20 120 Td (Bottom) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("boxes.pdf", None, bytes).expect("opens");
         app
@@ -3197,7 +3197,7 @@ fn an_applied_paragraph_keeps_its_edited_look_until_the_page_is_redrawn() {
 fn a_paragraph_whose_edit_fails_stays_open_with_its_typing() {
     let bytes = source_font_fixture_with_text("BT /F1 24 Tf 20 220 Td (Top) Tj ET BT /F2 24 Tf 20 120 Td (Bottom) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("boxes.pdf", None, bytes).expect("opens");
         app
@@ -3233,10 +3233,10 @@ fn a_paragraph_whose_edit_fails_stays_open_with_its_typing() {
 
 /// Two boxes, "Top" and "Bottom", in Edit text, with egui's animations on: the window animates
 /// unless the system asks for less motion, and the test harness turns them off.
-fn two_boxes_animated() -> (Harness<'static, PdfCraftApp>, [egui::Rect; 2]) {
+fn two_boxes_animated() -> (Harness<'static, PdfromeoApp>, [egui::Rect; 2]) {
     let bytes = source_font_fixture_with_text("BT /F1 24 Tf 20 220 Td (Top) Tj ET BT /F2 24 Tf 20 120 Td (Bottom) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).with_step_dt(1.0 / 60.0).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("boxes.pdf", None, bytes).expect("opens");
         app
@@ -3262,7 +3262,7 @@ fn two_boxes_animated() -> (Harness<'static, PdfCraftApp>, [egui::Rect; 2]) {
 }
 
 /// The colour of the editor's frame (the accent stroke around `r`) this frame, if it is painted.
-fn editor_frame_color(h: &Harness<'static, PdfCraftApp>, r: egui::Rect) -> Option<egui::Color32> {
+fn editor_frame_color(h: &Harness<'static, PdfromeoApp>, r: egui::Rect) -> Option<egui::Color32> {
     h.output().shapes.iter().find_map(|shape| match &shape.shape {
         egui::Shape::Rect(rect) if rect.stroke.width == 1.5 && rect.rect.contains(r.center()) => Some(rect.stroke.color),
         _ => None,
@@ -3389,7 +3389,7 @@ fn text_tool_mixed_style_row_grows_in_the_editor_and_saved_pdf() {
     let _gpu = gpu();
     let bytes = source_font_fixture_with_text("BT /F1 12 Tf 20 220 Td (Small ) Tj /F2 12 Tf (row) Tj ET");
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("mixed-row.pdf", None, bytes).unwrap();
         app
@@ -3465,7 +3465,7 @@ fn double_drawn() -> Vec<u8> {
 #[test]
 fn editing_a_double_drawn_line_replaces_every_copy() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("bold.pdf", None, double_drawn()).expect("opens");
         app
@@ -3505,7 +3505,7 @@ fn dragging_the_rotate_knob_turns_a_page_image() {
     let mut png = Vec::new();
     image::RgbImage::from_pixel(80, 40, image::Rgb([200, 40, 40])).write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).unwrap();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("picture.png", None, png.clone()).expect("opens");
         app
@@ -3579,7 +3579,7 @@ fn editing_existing_form_artwork_on_the_page() {
 
 fn check_existing_artwork(name: &'static str, bytes: Vec<u8>) {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes(name, None, bytes.clone()).expect("opens");
         app
@@ -3660,7 +3660,7 @@ fn the_format_panel_restyles_the_paragraph_being_edited() {
 fn the_format_panel_takes_any_scale_and_character_spacing() {
     let mut h = harness(1, |_| {});
     let id = h.state().views[0].id;
-    let width = |h: &Harness<'static, PdfCraftApp>, view: usize| {
+    let width = |h: &Harness<'static, PdfromeoApp>, view: usize| {
         let s = h.state();
         let r = s.session.get(s.views[view].id).unwrap().text_blocks(0)[0].rect;
         r[2] - r[0]
@@ -3678,7 +3678,7 @@ fn the_format_panel_takes_any_scale_and_character_spacing() {
     h.run_steps(3);
     assert!(h.state().views[0].line_editor.is_some());
     // Typed the way a person does: click the field, type, Enter.
-    let type_in = |h: &mut Harness<'static, PdfCraftApp>, label: &str, value: &str| {
+    let type_in = |h: &mut Harness<'static, PdfromeoApp>, label: &str, value: &str| {
         h.get_by_role_and_label(Role::SpinButton, label).click();
         h.run_steps(2);
         h.event(egui::Event::Text(value.into()));
@@ -3686,7 +3686,7 @@ fn the_format_panel_takes_any_scale_and_character_spacing() {
         h.key_press(Key::Enter);
         h.run_steps(4);
     };
-    let extras = |h: &Harness<'static, PdfCraftApp>| h.state().views[0].line_editor.as_ref().map(|e| (e.extras.scale, e.extras.char_spacing));
+    let extras = |h: &Harness<'static, PdfromeoApp>| h.state().views[0].line_editor.as_ref().map(|e| (e.extras.scale, e.extras.char_spacing));
     // Between the listed values (50…200 %, −1…5 pt) and beyond them, within what was always allowed.
     type_in(&mut h, "Horizontal scale", "80");
     assert_eq!(extras(&h), Some((80.0, 0.0)));
@@ -3741,7 +3741,7 @@ fn selected_text_formatting_keeps_the_rest_of_the_paragraph_and_reopens() {
 }
 
 /// Drag with the pointer from `from` to `to` in a few steps.
-fn drag(h: &mut Harness<'static, PdfCraftApp>, from: egui::Pos2, to: egui::Pos2) {
+fn drag(h: &mut Harness<'static, PdfromeoApp>, from: egui::Pos2, to: egui::Pos2) {
     h.hover_at(from);
     h.run_steps(1);
     h.drag_at(from);
@@ -3759,7 +3759,7 @@ fn dragging_a_paragraph_moves_it_and_its_edge_rewraps_it() {
     let mut h = harness(1, |_| {});
     assert!(h.state_mut().execute("edit.edit_text"));
     h.run_steps(2);
-    let block = |h: &Harness<'static, PdfCraftApp>| {
+    let block = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().text_blocks(0)[0].clone()
     };
@@ -3791,7 +3791,7 @@ fn dragging_a_paragraph_moves_it_and_its_edge_rewraps_it() {
 }
 
 /// Press and release at `at` without moving.
-fn click_at(h: &mut Harness<'static, PdfCraftApp>, at: egui::Pos2) {
+fn click_at(h: &mut Harness<'static, PdfromeoApp>, at: egui::Pos2) {
     h.hover_at(at);
     h.run_steps(1);
     h.drag_at(at);
@@ -3800,7 +3800,7 @@ fn click_at(h: &mut Harness<'static, PdfCraftApp>, at: egui::Pos2) {
     h.run_steps(4);
 }
 
-fn press(h: &mut Harness<'static, PdfCraftApp>, modifiers: Modifiers, key: Key) {
+fn press(h: &mut Harness<'static, PdfromeoApp>, modifiers: Modifiers, key: Key) {
     h.key_press_modifiers(modifiers, key);
     h.run_steps(4);
 }
@@ -3826,7 +3826,7 @@ fn arrow_keys_nudge_a_selected_image_instead_of_turning_the_page() {
     .unwrap();
     let bytes = write_incremental(&doc, &SaveOptions::default()).unwrap();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("figure.pdf", None, bytes.clone()).expect("opens");
         app
@@ -3835,7 +3835,7 @@ fn arrow_keys_nudge_a_selected_image_instead_of_turning_the_page() {
     assert!(h.state_mut().execute("edit.edit_text"));
     h.run_steps(2);
     let id = h.state().views[0].id;
-    let rect = |h: &Harness<'static, PdfCraftApp>| h.state().session.get(id).unwrap().page_images(0)[0].rect;
+    let rect = |h: &Harness<'static, PdfromeoApp>| h.state().session.get(id).unwrap().page_images(0)[0].rect;
     let before = rect(&h);
     let r = h.state().views[0].page_screen_rect(0).expect("on screen");
     click_at(&mut h, egui::pos2(r.left() + 100.0 / 200.0 * r.width(), r.top() + (300.0 - 240.0) / 300.0 * r.height()));
@@ -3858,7 +3858,7 @@ fn an_open_paragraph_moves_by_its_frame_and_by_the_arrow_keys() {
     assert!(h.state_mut().execute("edit.edit_text"));
     h.run_steps(2);
     let id = h.state().views[0].id;
-    let block = |h: &Harness<'static, PdfCraftApp>| h.state().session.get(id).unwrap().text_blocks(0)[0].clone();
+    let block = |h: &Harness<'static, PdfromeoApp>| h.state().session.get(id).unwrap().text_blocks(0)[0].clone();
     let r = h.state().views[0].page_screen_rect(0).expect("on screen");
     let k = r.width() / 200.0;
     let screen = |x: f64, y: f64| egui::pos2(r.left() + x as f32 * k, r.top() + (300.0 - y as f32) * k);
@@ -3915,9 +3915,9 @@ fn paragraph_drag_fixture(content: &str, rotation: i64, unit: i64) -> Vec<u8> {
     pdfcraft_cos::write_incremental(&doc, &Default::default()).unwrap()
 }
 
-fn paragraph_drag_harness(bytes: Vec<u8>, view_rotation: u16) -> Harness<'static, PdfCraftApp> {
+fn paragraph_drag_harness(bytes: Vec<u8>, view_rotation: u16) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.session = pdfcraft_engine::Session::new().with_clock(|| 1_700_000_000);
         app.set_option("language", "en").unwrap();
         app.open_bytes("paragraphs.pdf", None, bytes).unwrap();
@@ -3930,14 +3930,14 @@ fn paragraph_drag_harness(bytes: Vec<u8>, view_rotation: u16) -> Harness<'static
     h
 }
 
-fn dragged_paragraphs(h: &Harness<'static, PdfCraftApp>) -> Vec<pdfcraft_engine::TextBlock> {
+fn dragged_paragraphs(h: &Harness<'static, PdfromeoApp>) -> Vec<pdfcraft_engine::TextBlock> {
     let app = h.state();
     app.session.get(app.views[0].id).unwrap().text_blocks(0)
 }
 
 /// Resolve the current inventory and transform for every gesture, never an old block index
 /// or cached screen position. With identical labels, choose the last (topmost) source box.
-fn paragraph_drag_points(h: &Harness<'static, PdfCraftApp>, text: &str, offset: [f64; 2]) -> (egui::Pos2, egui::Pos2) {
+fn paragraph_drag_points(h: &Harness<'static, PdfromeoApp>, text: &str, offset: [f64; 2]) -> (egui::Pos2, egui::Pos2) {
     let app = h.state();
     let view = &app.views[0];
     let doc = app.session.get(view.id).unwrap();
@@ -3952,7 +3952,7 @@ fn paragraph_drag_points(h: &Harness<'static, PdfCraftApp>, text: &str, offset: 
     (xf.user_rect(&doc.info, 0, b.rect.map(|v| v as f32)).center(), xf.user_rect(&doc.info, 0, moved).center())
 }
 
-fn drag_paragraph(h: &mut Harness<'static, PdfCraftApp>, text: &str, offset: [f64; 2]) {
+fn drag_paragraph(h: &mut Harness<'static, PdfromeoApp>, text: &str, offset: [f64; 2]) {
     let (from, to) = paragraph_drag_points(h, text, offset);
     assert!(
         h.query_all_by_label_contains("object selected").next().is_none() && h.query_all_by_label_contains("objects selected").next().is_none(),
@@ -3979,7 +3979,7 @@ fn assert_dragged_paragraphs(actual: &[pdfcraft_engine::TextBlock], expected: &[
 
 /// Read only the current page contents, not stale revisions or the renderer's deduplicated
 /// text layer. These synthetic fixtures contain each literal exactly once per source draw.
-fn paragraph_drag_content(h: &Harness<'static, PdfCraftApp>) -> String {
+fn paragraph_drag_content(h: &Harness<'static, PdfromeoApp>) -> String {
     let app = h.state();
     let doc = pdfcraft_cos::Document::open(app.session.get(app.views[0].id).unwrap().bytes.clone()).unwrap();
     let page = pdfcraft_model::pages(&doc)[0].clone();
@@ -3997,7 +3997,7 @@ fn paragraph_drag_content(h: &Harness<'static, PdfCraftApp>) -> String {
     String::from_utf8(bytes).unwrap()
 }
 
-fn save_paragraph_drag(h: &mut Harness<'static, PdfCraftApp>, name: &str, original: &[u8]) -> Vec<u8> {
+fn save_paragraph_drag(h: &mut Harness<'static, PdfromeoApp>, name: &str, original: &[u8]) -> Vec<u8> {
     let out = temp_path(name);
     let id = h.state().views[0].id;
     h.state_mut().save_override = Some(out.to_string_lossy().into_owned());
@@ -4011,7 +4011,7 @@ fn save_paragraph_drag(h: &mut Harness<'static, PdfCraftApp>, name: &str, origin
     saved
 }
 
-fn paragraph_drag_shot(h: &mut Harness<'static, PdfCraftApp>, name: &str) {
+fn paragraph_drag_shot(h: &mut Harness<'static, PdfromeoApp>, name: &str) {
     if let Ok(directory) = std::env::var("PDFCRAFT_PARAGRAPH_DRAG_SHOTS") {
         for _ in 0..60 {
             h.run_steps(2);
@@ -4197,7 +4197,7 @@ fn check_added_text_drag(panel_open: bool) {
     h = paragraph_drag_harness(original.as_ref().clone(), 0);
     h.state_mut().left_open = panel_open;
     h.run_steps(4);
-    let added = |h: &Harness<'static, PdfCraftApp>| {
+    let added = |h: &Harness<'static, PdfromeoApp>| {
         let app = h.state();
         app.session.get(app.views[0].id).unwrap().added().to_vec()
     };
@@ -4288,7 +4288,7 @@ fn an_ordinary_paragraph_drag_cannot_reuse_an_index_after_an_edit() {
 }
 
 /// A quick flick: press at `from`, and the next frame already finds the pointer at `to`.
-fn flick(h: &mut Harness<'static, PdfCraftApp>, from: egui::Pos2, to: egui::Pos2) {
+fn flick(h: &mut Harness<'static, PdfromeoApp>, from: egui::Pos2, to: egui::Pos2) {
     h.hover_at(from);
     h.run_steps(1);
     h.drag_at(from);
@@ -4304,11 +4304,11 @@ fn a_quick_flick_on_either_edge_rewraps_the_paragraph() {
     let mut h = harness(1, |_| {});
     assert!(h.state_mut().execute("edit.edit_text"));
     h.run_steps(2);
-    let lines = |h: &Harness<'static, PdfCraftApp>| {
+    let lines = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().text_lines(0)
     };
-    let block = |h: &Harness<'static, PdfCraftApp>| {
+    let block = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().text_blocks(0)[0].clone()
     };
@@ -4351,11 +4351,11 @@ fn a_paragraph_rewraps_from_the_outer_half_of_its_edge_handles() {
     let mut h = harness(1, |_| {});
     assert!(h.state_mut().execute("edit.edit_text"));
     h.run_steps(2);
-    let lines = |h: &Harness<'static, PdfCraftApp>| {
+    let lines = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().text_lines(0).iter().map(|l| l.text.clone()).collect::<Vec<_>>()
     };
-    let block = |h: &Harness<'static, PdfCraftApp>| {
+    let block = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().text_blocks(0)[0].clone()
     };
@@ -4399,9 +4399,9 @@ fn a_paragraph_rewraps_from_the_outer_half_of_its_edge_handles() {
 }
 
 /// The Pages panel, in a window tall enough to show every thumbnail of a short fixture.
-fn pages_panel(pages: usize) -> Harness<'static, PdfCraftApp> {
+fn pages_panel(pages: usize) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("doc.pdf", None, fixture(pages)).expect("fixture opens");
         app.set_option("panel", "pages").unwrap();
@@ -4411,7 +4411,7 @@ fn pages_panel(pages: usize) -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn picked(h: &Harness<'static, PdfCraftApp>) -> Vec<usize> {
+fn picked(h: &Harness<'static, PdfromeoApp>) -> Vec<usize> {
     h.state().views[0].selected.iter().copied().collect()
 }
 
@@ -4504,7 +4504,7 @@ fn dragging_pages_panel_thumbnails_reorders_pages() {
     let mut h = harness(4, |app| app.right = Some(pdfcraft_ui_egui::RightPanel::Pages));
     let before = page_texts(h.state());
     // The Pages panel is on the right; the document view may label its pages too.
-    let thumb = |h: &Harness<'static, PdfCraftApp>, label: &str| {
+    let thumb = |h: &Harness<'static, PdfromeoApp>, label: &str| {
         h.get_all_by_label(label).map(|n| n.rect()).max_by(|a, b| a.left().total_cmp(&b.left())).expect("the thumbnail")
     };
     // Grab page 3 (page 4 is below the window) and drop it above page 1.
@@ -4559,11 +4559,11 @@ fn a_thumbnail_drag_that_ends_off_the_panel_or_outlives_the_pages_is_dropped() {
 }
 
 /// A Pages panel thumbnail (the rightmost node with that label).
-fn panel_thumb(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Pos2 {
+fn panel_thumb(h: &Harness<'static, PdfromeoApp>, label: &str) -> egui::Pos2 {
     h.get_all_by_label(label).map(|n| n.rect()).max_by(|a, b| a.left().total_cmp(&b.left())).expect("the thumbnail").center()
 }
 
-fn right_click_at(h: &mut Harness<'static, PdfCraftApp>, at: egui::Pos2) {
+fn right_click_at(h: &mut Harness<'static, PdfromeoApp>, at: egui::Pos2) {
     h.hover_at(at);
     h.run_steps(1);
     h.event(egui::Event::PointerButton { pos: at, button: egui::PointerButton::Secondary, pressed: true, modifiers: Default::default() });
@@ -4646,7 +4646,7 @@ fn one_editor_contains_mixed_styles_and_visual_rows() {
          BT /F2 10 Tf 20 195 Td (Last row) Tj ET",
     );
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("mixed.pdf", None, bytes).unwrap();
         app
@@ -4723,7 +4723,7 @@ fn the_caret_on_a_small_row_is_as_tall_as_that_row() {
          BT /F2 10 Tf 20 195 Td (Last row) Tj ET",
     );
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("mixed.pdf", None, bytes).unwrap();
         app
@@ -4734,7 +4734,7 @@ fn the_caret_on_a_small_row_is_as_tall_as_that_row() {
     let page = h.state().views[0].page_screen_rect(0).unwrap();
     let k = page.width() / 300.0;
     let screen = |x: f32, y: f32| egui::pos2(page.left() + x * k, page.top() + (300.0 - y) * k);
-    let click = |h: &mut Harness<'static, PdfCraftApp>, at: egui::Pos2| {
+    let click = |h: &mut Harness<'static, PdfromeoApp>, at: egui::Pos2| {
         h.hover_at(at);
         h.run_steps(1);
         h.drag_at(at);
@@ -4775,7 +4775,7 @@ fn private_document_regions_open_as_one_editor() {
     let bytes = std::fs::read(&path).unwrap();
     let original = bytes.clone();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("private.pdf", None, bytes).unwrap();
         app
@@ -4907,7 +4907,7 @@ fn inline_editor_preserves_source_font_and_previews_live_bounds() {
     cos.update_dict(pdfcraft_cos::ObjRef::new(3, 0), |d| *d = font).unwrap();
     let bytes = write_incremental(&cos, &Default::default()).unwrap();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("stable.pdf", None, bytes).unwrap();
         app
@@ -4945,7 +4945,7 @@ fn inline_editor_preserves_source_font_and_previews_live_bounds() {
     for section in &shape.galley.job.sections {
         assert!(matches!(&section.format.font_id.family,egui::FontFamily::Name(name) if name.starts_with("pdf-source-")));
     }
-    let frame = |h: &Harness<'_, PdfCraftApp>| {
+    let frame = |h: &Harness<'_, PdfromeoApp>| {
         h.output()
             .shapes
             .iter()
@@ -5039,7 +5039,7 @@ fn clipped_artwork_with_labels_drawn(own_clip: bool) -> Vec<u8> {
 #[test]
 fn cropped_images_do_not_intercept_text_and_stay_inside_each_page() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("clipped.pdf", None, clipped_artwork_with_labels()).unwrap();
         app
@@ -5090,7 +5090,7 @@ fn cropped_images_do_not_intercept_text_and_stay_inside_each_page() {
 #[test]
 fn cropped_image_corner_resize_keeps_opposite_corner_and_scales_crop() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("clipped.pdf", None, clipped_artwork_with_labels_drawn(true)).unwrap();
         app
@@ -5159,7 +5159,7 @@ fn cropped_image_corner_resize_keeps_opposite_corner_and_scales_crop() {
 #[test]
 fn image_pixels_follow_the_frame_while_a_corner_is_dragged() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("clipped.pdf", None, clipped_artwork_with_labels_drawn(true)).unwrap();
         app
@@ -5188,14 +5188,14 @@ fn image_pixels_follow_the_frame_while_a_corner_is_dragged() {
     h.drop_at(p);
     h.run_steps(3);
     assert!(h.state().views[0].image_selection.is_some());
-    let frame = |h: &Harness<'static, PdfCraftApp>| {
+    let frame = |h: &Harness<'static, PdfromeoApp>| {
         h.output().shapes.iter().find_map(|s| match &s.shape {
             egui::Shape::Rect(r) if r.stroke.color == egui::Color32::from_rgb(0x14, 0x73, 0xE6) && r.rect.width() > 20.0 => Some(r.rect),
             _ => None,
         })
     };
     // Textured meshes smaller than the page: the page raster itself always covers the page.
-    let pictures = |h: &Harness<'static, PdfCraftApp>| -> Vec<egui::Rect> {
+    let pictures = |h: &Harness<'static, PdfromeoApp>| -> Vec<egui::Rect> {
         h.output()
             .shapes
             .iter()
@@ -5208,12 +5208,12 @@ fn image_pixels_follow_the_frame_while_a_corner_is_dragged() {
     };
     // The dragged picture is cut from the page raster, which a render thread delivers after
     // however many frames it takes (more on a slow runner): wait for it on screen, by state.
-    let raster_shown = |h: &Harness<'static, PdfCraftApp>| {
+    let raster_shown = |h: &Harness<'static, PdfromeoApp>| {
         h.output().shapes.iter().any(|s| {
             matches!(&s.shape, egui::Shape::Mesh(m) if m.texture_id != egui::TextureId::default() && m.calc_bounds().width() >= page.width() - 1.0)
         })
     };
-    let wait_for_raster = |h: &mut Harness<'static, PdfCraftApp>| {
+    let wait_for_raster = |h: &mut Harness<'static, PdfromeoApp>| {
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         while h.state().render_pending() || !raster_shown(h) {
             assert!(std::time::Instant::now() < deadline, "timed out waiting for the page raster");
@@ -5286,7 +5286,7 @@ fn a_resized_image_keeps_its_new_size_until_the_page_is_redrawn() {
     .unwrap();
     let bytes = write_incremental(&doc, &Default::default()).unwrap();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("picture.pdf", None, bytes).unwrap();
         app
@@ -5361,7 +5361,7 @@ fn private_cropped_image_grips_resize_without_moving_the_opposite_corner() {
     let original = std::fs::read(&path).unwrap();
     let bytes = original.clone();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("private.pdf", None, bytes).unwrap();
         app
@@ -5453,7 +5453,7 @@ fn private_document_cropped_artwork_does_not_block_text() {
     let original = std::fs::read(&path).unwrap();
     let bytes = original.clone();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("private.pdf", None, bytes).unwrap();
         app
@@ -5518,7 +5518,7 @@ fn private_new_chinese_keyboard_input_preserves_font_layout_and_saved_pixels() {
     let bytes = original.clone();
     let font = Arc::new(std::fs::read(font_path).unwrap());
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("private.pdf", None, bytes).unwrap();
         app
@@ -5641,7 +5641,7 @@ fn moving_text_offers_the_four_way_arrow() {
     let k = r.width() / 200.0;
     let screen = |x: f64, y: f64| egui::pos2(r.left() + x as f32 * k, r.top() + (300.0 - y as f32) * k);
     let centre = screen((block.rect[0] + block.rect[2]) / 2.0, (block.rect[1] + block.rect[3]) / 2.0);
-    let cursor_at = |h: &mut Harness<'static, PdfCraftApp>, at: egui::Pos2| {
+    let cursor_at = |h: &mut Harness<'static, PdfromeoApp>, at: egui::Pos2| {
         h.hover_at(at);
         h.run_steps(2);
         h.output().platform_output.cursor_icon
@@ -5678,7 +5678,7 @@ fn cropping_a_picture_with_its_handles() {
     let mut png = Vec::new();
     image::RgbImage::from_pixel(80, 40, image::Rgb([200, 40, 40])).write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).unwrap();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("picture.png", None, png.clone()).expect("opens");
         app
@@ -5849,7 +5849,7 @@ fn a_paragraph_running_off_its_page_edits_without_covering_the_next_page() {
     }
     bytes.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n", objs.len() + 1).as_bytes());
     let mut h = Harness::builder().with_size(egui::vec2(1200.0, 1400.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("off-page.pdf", None, bytes).unwrap();
         app
@@ -5858,7 +5858,7 @@ fn a_paragraph_running_off_its_page_edits_without_covering_the_next_page() {
     h.state_mut().views[0].fit = pdfcraft_ui_egui::canvas::Fit::Page;
     h.run_steps(4);
     let rects =
-        |h: &Harness<'static, PdfCraftApp>| (h.state().views[0].page_screen_rect(0).unwrap(), h.state().views[0].page_screen_rect(1).unwrap());
+        |h: &Harness<'static, PdfromeoApp>| (h.state().views[0].page_screen_rect(0).unwrap(), h.state().views[0].page_screen_rect(1).unwrap());
     // The same pages without Edit text, so without the paragraph's outline: what the gap looks
     // like there, pixel by pixel (review on #3070: it isn't one colour on every platform).
     let (first, second) = rects(&h);
@@ -5912,7 +5912,7 @@ fn a_paragraph_running_off_its_page_edits_without_covering_the_next_page() {
 /// Between pages `first` and `second`, and on `second` above its own text, across where page
 /// 1's paragraph is: what is there without it (the gap as `plain` shows it without Edit text,
 /// white paper).
-fn shown_on_its_page_only(h: &mut Harness<'static, PdfCraftApp>, plain: &image::RgbaImage, first: egui::Rect, second: egui::Rect, what: &str) {
+fn shown_on_its_page_only(h: &mut Harness<'static, PdfromeoApp>, plain: &image::RgbaImage, first: egui::Rect, second: egui::Rect, what: &str) {
     let shot = h.render().unwrap();
     let pixel = |x: f32, y: f32| shot.get_pixel(x as u32, y as u32).0;
     let gap_y = (first.bottom() + second.top()) / 2.0;
@@ -5927,14 +5927,14 @@ fn shown_on_its_page_only(h: &mut Harness<'static, PdfCraftApp>, plain: &image::
 }
 
 /// Where a mode bar tab is, by its label.
-fn mode_tab(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
+fn mode_tab(h: &Harness<'static, PdfromeoApp>, label: &str) -> egui::Rect {
     h.get_all_by_role_and_label(Role::Button, label).map(|n| n.rect()).find(|r| r.bottom() < 120.0).expect("a mode tab")
 }
 
 /// The cursor over each mode bar tab that page 1's text lies under, once that text is scrolled
 /// up under the bar. With the All tools panel closed it lies under Edit, Convert and E-Sign; it
 /// starts right of All tools.
-fn mode_tab_cursors(h: &mut Harness<'static, PdfCraftApp>, text: egui::Rect) -> [(&'static str, egui::CursorIcon); 3] {
+fn mode_tab_cursors(h: &mut Harness<'static, PdfromeoApp>, text: egui::Rect) -> [(&'static str, egui::CursorIcon); 3] {
     h.state_mut().views[0].goto = Some((0, 0.5));
     h.run_steps(4);
     let offset = h.state().views[0].page_screen_rect(0).expect("on screen").top();
@@ -5951,7 +5951,7 @@ const HAND_ON_EVERY_TAB: [(&str, egui::CursorIcon); 3] =
     [("Edit", egui::CursorIcon::PointingHand), ("Convert", egui::CursorIcon::PointingHand), ("E-Sign", egui::CursorIcon::PointingHand)];
 
 /// Page 1's text block on screen, relative to the page's top edge, in the window as it is now.
-fn page_text(h: &Harness<'static, PdfCraftApp>) -> egui::Rect {
+fn page_text(h: &Harness<'static, PdfromeoApp>) -> egui::Rect {
     let id = h.state().views[0].id;
     let block = h.state().session.get(id).unwrap().text_blocks(0)[0].clone();
     let r = h.state().views[0].page_screen_rect(0).expect("on screen");

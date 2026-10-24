@@ -5,7 +5,7 @@ use egui::{Color32, CornerRadius, Pos2, Rect, Stroke};
 use pdfcraft_render::{RenderConfig, RenderRequest, RequestKind, Tile};
 
 use crate::canvas::{DocView, PageXform};
-use crate::{PdfCraftApp, QuickTool};
+use crate::{PdfromeoApp, QuickTool};
 
 /// A finished gesture: (page, the rectangle on screen, the same in page view points
 /// [x0, y0, x1, y1]); a plain click has an empty rectangle.
@@ -44,7 +44,7 @@ pub(crate) fn page_input(ui: &egui::Ui, resp: &egui::Response, xf: &PageXform, p
     }
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Finish a marquee gesture for the current tool.
     pub(crate) fn finish_marquee(&mut self, index: usize, done: Marquee) {
         let (page, rect, view_rect) = done;

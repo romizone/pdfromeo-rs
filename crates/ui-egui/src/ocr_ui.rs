@@ -9,7 +9,7 @@ use pdfcraft_engine::DocId;
 use pdfcraft_engine::ocr::{LANGUAGES, OcrPage, OcrSettings};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, widgets};
+use crate::{PdfromeoApp, widgets};
 
 /// Which pages to read.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -67,7 +67,7 @@ pub struct OcrRun {
     pub progress: Arc<Mutex<OcrProgress>>,
 }
 
-pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> (bool, bool) {
     let pages = app.active_ids().and_then(|(_, id)| app.session.get(id)).map_or(1, |d| d.info.pages.len().max(1));
     let available = pdfcraft_engine::ocr::available();
     let d = &mut app.ocr_draft;
@@ -125,7 +125,7 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (boo
     });
     if !available {
         ui.label(
-            egui::RichText::new(tl!("Text recognition isn't installed: its model files are missing. Reinstall PdfCraft, or set PDFCRAFT_MODELS to the folder that holds them."))
+            egui::RichText::new(tl!("Text recognition isn't installed: its model files are missing. Reinstall Pdfromeo, or set PDFCRAFT_MODELS to the folder that holds them."))
                 .small()
                 .color(t.text_muted),
         );
@@ -146,7 +146,7 @@ pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (boo
     (go, cancel)
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Recognize text on the pages chosen in the dialog, in the background.
     pub fn start_ocr(&mut self) {
         let Some((vi, id)) = self.active_ids() else { return };

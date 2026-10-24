@@ -4,7 +4,7 @@
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 /// A one-page PDF with a proper xref; `acroform` is the catalog's /AcroForm (or empty), `extra`
 /// more catalog entries, `objects` extra objects numbered from 5.
@@ -33,9 +33,9 @@ fn pdf(acroform: &str, extra: &str, objects: &[&str]) -> Vec<u8> {
 
 const XFA_PACKET: &str = "<< /Length 52 >>\nstream\n<xdp:xdp xmlns:xdp=\"http://ns.adobe.com/xdp/\"></xdp:xdp>\nendstream";
 
-fn open(bytes: Vec<u8>) -> Harness<'static, PdfCraftApp> {
+fn open(bytes: Vec<u8>) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 800.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, bytes).expect("opens");
         app
@@ -44,7 +44,7 @@ fn open(bytes: Vec<u8>) -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn xfa(h: &Harness<'static, PdfCraftApp>) -> Option<pdfcraft_render::Xfa> {
+fn xfa(h: &Harness<'static, PdfromeoApp>) -> Option<pdfcraft_render::Xfa> {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().info.xfa
 }
@@ -104,7 +104,7 @@ fn ordinary_forms_and_documents_have_no_xfa_notice() {
 }
 
 /// Run frames until the pages are drawn (fields can be clicked then).
-fn wait_for_pages(h: &mut Harness<'static, PdfCraftApp>) {
+fn wait_for_pages(h: &mut Harness<'static, PdfromeoApp>) {
     for _ in 0..40 {
         h.run_steps(2);
         if !h.state().render_pending() {
@@ -115,7 +115,7 @@ fn wait_for_pages(h: &mut Harness<'static, PdfCraftApp>) {
 }
 
 /// Click the centre of a field's widget.
-fn click_field(h: &mut Harness<'static, PdfCraftApp>, name: &str) {
+fn click_field(h: &mut Harness<'static, PdfromeoApp>, name: &str) {
     let p = {
         let s = h.state();
         let doc = s.session.get(s.views[0].id).unwrap();
@@ -134,7 +134,7 @@ fn click_field(h: &mut Harness<'static, PdfCraftApp>, name: &str) {
 fn xfa_buttons_run_their_scripts_in_the_app() {
     let mut h = open(pdfcraft_xfa::fixtures::shell(&pdfcraft_xfa::fixtures::scripted_template()));
     wait_for_pages(&mut h);
-    let names = |h: &Harness<'static, PdfCraftApp>| {
+    let names = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         s.session.get(s.views[0].id).unwrap().form.iter().map(|f| f.name.clone()).collect::<Vec<_>>()
     };

@@ -6,7 +6,7 @@ use std::time::{Duration, SystemTime};
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 use pdfcraft_ui_egui::folders_ui::{MAX_PINNED, SHOWN};
 
 /// A one-page PDF.
@@ -48,9 +48,9 @@ impl Drop for TempFolder {
     }
 }
 
-fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, PdfCraftApp> {
+fn harness(setup: impl FnOnce(&mut PdfromeoApp) + 'static) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1400.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         // List folders on the frame that asks, not on a worker thread.
         app.run_inline = true;
@@ -62,7 +62,7 @@ fn harness(setup: impl FnOnce(&mut PdfCraftApp) + 'static) -> Harness<'static, P
     h
 }
 
-fn listed(h: &Harness<'static, PdfCraftApp>, folder: &str) -> Vec<String> {
+fn listed(h: &Harness<'static, PdfromeoApp>, folder: &str) -> Vec<String> {
     h.state().pinned.listing(folder).map(|l| l.files.iter().map(|f| f.name.clone()).collect()).unwrap_or_default()
 }
 
@@ -144,10 +144,10 @@ fn unpinning_removes_the_folder_but_not_its_files() {
 fn pinned_folders_survive_a_restart() {
     let dir = TempFolder::new("restart");
     let folder = dir.path();
-    let mut a = PdfCraftApp::new();
+    let mut a = PdfromeoApp::new();
     a.set_option("language", "en").unwrap();
     assert!(a.pin_folder(&folder));
-    let mut b = PdfCraftApp::new();
+    let mut b = PdfromeoApp::new();
     b.set_option("language", "en").unwrap();
     b.restore(&a.persist());
     assert_eq!(b.pinned.folders, [folder]);
@@ -225,7 +225,7 @@ fn a_long_pdf_name_is_cut_before_its_date_and_size() {
 
 #[test]
 fn pinning_is_limited_and_never_duplicates() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     assert!(!app.pin_folder("relative/scans"), "a relative path is refused");
     let root = if cfg!(windows) { "C:\\" } else { "/" };

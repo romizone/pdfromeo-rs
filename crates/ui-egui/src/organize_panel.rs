@@ -13,10 +13,10 @@ use pdfcraft_engine::Edit;
 
 use crate::canvas::ViewAction;
 use crate::theme::{self, Tokens};
-use crate::{LeftPanel, PdfCraftApp, icons, widgets};
+use crate::{LeftPanel, PdfromeoApp, icons, widgets};
 
 /// Whether the left panel is Organize pages: the tool is chosen, or the active view shows the grid.
-pub(crate) fn showing(app: &PdfCraftApp) -> bool {
+pub(crate) fn showing(app: &PdfromeoApp) -> bool {
     app.left == LeftPanel::Tool("organize") || app.active.and_then(|i| app.views.get(i)).is_some_and(|v| v.organize)
 }
 
@@ -39,7 +39,7 @@ enum Act {
     Command(&'static str),
 }
 
-pub(crate) fn panel(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
+pub(crate) fn panel(app: &mut PdfromeoApp, ui: &mut egui::Ui, t: &Tokens) {
     let Some((index, id)) = app.active_ids() else { return };
     let Some(doc) = app.session.get(id) else { return };
     let info = &doc.info;
@@ -182,7 +182,7 @@ pub(crate) fn panel(app: &mut PdfCraftApp, ui: &mut egui::Ui, t: &Tokens) {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Availability {
     Ready,
-    /// Not in PdfCraft yet: shown muted, as Acrobat lists it, and says it is planned when hovered.
+    /// Not in Pdfromeo yet: shown muted, as Acrobat lists it, and says it is planned when hovered.
     Later,
 }
 

@@ -8,7 +8,7 @@
 //! - [`ControlPlugin`], an egui plugin, keeps a copy of the AccessKit tree from every frame's
 //!   output (the widget tree with ids, roles, labels, rects and states) and injects queued input
 //!   events (AccessKit click actions, pointer events, keys, text) at the start of later frames.
-//! - Requests reach the app through a channel; `PdfCraftApp` answers them at the start of a
+//! - Requests reach the app through a channel; `PdfromeoApp` answers them at the start of a
 //!   frame, so they see and change exactly what the user would.
 //!
 //! Methods (JSON in, JSON out):
@@ -178,7 +178,7 @@ pub fn attach(ctx: &egui::Context) -> (Control, ControlClient) {
     (Control { rx, shared, pending: Vec::new(), next_tag: 1 }, ControlClient { tx, ctx: ctx.clone() })
 }
 
-/// What a request needs from the app (implemented by `PdfCraftApp`).
+/// What a request needs from the app (implemented by `PdfromeoApp`).
 pub(crate) trait Host {
     fn state(&self) -> Value;
     fn command(&mut self, id: &str) -> Reply;
@@ -644,7 +644,7 @@ fn screenshot_png(image: &egui::ColorImage, region: Option<egui::Rect>, ppp: f32
     Ok(json!({ "png_base64": base64::engine::general_purpose::STANDARD.encode(out), "width": cw, "height": ch, "pixels_per_point": ppp }))
 }
 
-impl Host for crate::PdfCraftApp {
+impl Host for crate::PdfromeoApp {
     fn dock(&mut self, reset: bool, params: &Value) -> Reply {
         crate::docking::command(self, reset, params)
     }
@@ -1409,7 +1409,7 @@ mod pointer_tests {
         struct Probe {
             control: Option<Control>,
             client: Option<ControlClient>,
-            host: crate::PdfCraftApp,
+            host: crate::PdfromeoApp,
             primary: usize,
             secondary: usize,
             disabled: usize,
@@ -1436,7 +1436,7 @@ mod pointer_tests {
             let state = Probe {
                 control: None,
                 client: None,
-                host: crate::PdfCraftApp::new(),
+                host: crate::PdfromeoApp::new(),
                 primary: 0,
                 secondary: 0,
                 disabled: 0,

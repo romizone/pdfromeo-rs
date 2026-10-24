@@ -5,7 +5,7 @@ use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_render::ReadingColors;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 /// One valid page (proper xref, so no repair banner covers the dialog): black text on white.
 fn pdf() -> Vec<u8> {
@@ -59,7 +59,7 @@ fn pending_pages_use_document_reading_background() {
         (ReadingColors::GREEN_ON_BLACK, Color32::BLACK),
         (custom, Color32::from_rgb(0x18, 0x24, 0x30)),
     ] {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("pending.pdf", None, pdf_pages(3)).unwrap();
         let id = app.views[0].id;
@@ -102,7 +102,7 @@ fn png() -> Vec<u8> {
 
 /// The Reading colours combo of the preferences dialog: it shows the chosen mode as its value,
 /// and no other combo in the dialog shows `Off` while the setting is off.
-fn combo(h: &mut Harness<'static, PdfCraftApp>) {
+fn combo(h: &mut Harness<'static, PdfromeoApp>) {
     // The preferences dialog grew taller than the window, which leaves this combo below the
     // fold where a click lands outside the dialog and dismisses it; scroll it into view and
     // let the scroll settle before clicking.
@@ -114,7 +114,7 @@ fn combo(h: &mut Harness<'static, PdfCraftApp>) {
 #[test]
 fn reading_colours_preference_round_trips() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("doc.pdf", None, pdf()).expect("opens");
         app.set_option("dialog", "preferences").unwrap();
@@ -137,11 +137,11 @@ fn reading_colours_preference_round_trips() {
     h.run_steps(1);
 
     // The choice survives a restart through the same path the settings file uses.
-    let mut restored = PdfCraftApp::new();
+    let mut restored = PdfromeoApp::new();
     restored.restore(&h.state().persist());
     assert_eq!(restored.reading_colors, ReadingColors::WHITE_ON_BLACK);
     // A settings file without the field keeps Off.
-    let mut fresh = PdfCraftApp::new();
+    let mut fresh = PdfromeoApp::new();
     fresh.restore(r#"{"theme": "dark"}"#);
     assert_eq!(fresh.reading_colors, ReadingColors::default());
     // A corrupt value fails to deserialize and falls back to Off instead of panicking.
@@ -154,7 +154,7 @@ fn reading_colours_preference_round_trips() {
 #[test]
 fn reading_colours_seed_on_open() {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.reading_colors = ReadingColors::WHITE_ON_BLACK;
         app.open_bytes("doc.pdf", None, pdf()).expect("opens");

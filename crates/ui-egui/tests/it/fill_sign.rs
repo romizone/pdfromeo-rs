@@ -4,7 +4,7 @@ use egui::{Pos2, pos2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_ui_egui::fill_sign::{FillTool, SavedSig};
-use pdfcraft_ui_egui::{Dialog, PdfCraftApp, QuickTool};
+use pdfcraft_ui_egui::{Dialog, PdfromeoApp, QuickTool};
 
 const FIXTURE: &[u8] = b"%PDF-1.7
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
@@ -15,14 +15,14 @@ trailer << /Root 1 0 R >>
 
 use crate::gpu;
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     harness_bytes(FIXTURE)
 }
 
-fn harness_bytes(fixture: &[u8]) -> Harness<'static, PdfCraftApp> {
+fn harness_bytes(fixture: &[u8]) -> Harness<'static, PdfromeoApp> {
     let fixture = fixture.to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, fixture.clone()).unwrap();
         app.set_option("left", "closed").unwrap();
@@ -34,7 +34,7 @@ fn harness_bytes(fixture: &[u8]) -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn at(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32) -> Pos2 {
+fn at(h: &Harness<'static, PdfromeoApp>, x: f32, y: f32) -> Pos2 {
     let s = h.state();
     let page = &s.session.get(s.views[0].id).unwrap().info.pages[0];
     let xf = pdfcraft_ui_egui::canvas::PageXform {
@@ -49,7 +49,7 @@ fn at(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32) -> Pos2 {
 
 /// The screen point `dx` points right and `dy` points up, as displayed, from the user-space point
 /// (`x`, `y`): unlike `at`, offsets don't turn with the page's /Rotate.
-fn shown(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32, dx: f32, dy: f32) -> Pos2 {
+fn shown(h: &Harness<'static, PdfromeoApp>, x: f32, y: f32, dx: f32, dy: f32) -> Pos2 {
     let s = h.state();
     let page = &s.session.get(s.views[0].id).unwrap().info.pages[0];
     let xf = pdfcraft_ui_egui::canvas::PageXform {
@@ -62,7 +62,7 @@ fn shown(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32, dx: f32, dy: f32) ->
     xf.norm_to_screen((p[0] + dx) / xf.pw, (p[1] - dy) / xf.ph)
 }
 
-fn click(h: &mut Harness<'static, PdfCraftApp>, x: f32, y: f32) {
+fn click(h: &mut Harness<'static, PdfromeoApp>, x: f32, y: f32) {
     let p = at(h, x, y);
     h.hover_at(p);
     h.run_steps(1);
@@ -72,7 +72,7 @@ fn click(h: &mut Harness<'static, PdfCraftApp>, x: f32, y: f32) {
     h.run_steps(3);
 }
 
-fn items(h: &Harness<'static, PdfCraftApp>) -> Vec<(String, Option<String>)> {
+fn items(h: &Harness<'static, PdfromeoApp>) -> Vec<(String, Option<String>)> {
     let s = h.state();
     let mut v: Vec<_> = s.session.get(s.views[0].id).unwrap().info.annotations.iter().map(|a| (a.subtype.clone(), a.contents.clone())).collect();
     v.sort();
@@ -80,7 +80,7 @@ fn items(h: &Harness<'static, PdfCraftApp>) -> Vec<(String, Option<String>)> {
 }
 
 /// Page rasters arrive from the render worker independently of kittest's virtual frames.
-fn rendered_ink(h: &mut Harness<'static, PdfCraftApp>, x: f32, y: f32) -> image::RgbaImage {
+fn rendered_ink(h: &mut Harness<'static, PdfromeoApp>, x: f32, y: f32) -> image::RgbaImage {
     for _ in 0..50 {
         h.run_steps(2);
         let p = at(h, x, y);
@@ -140,7 +140,7 @@ fn text_marks_and_date() {
 }
 
 /// The open type box, found as the focused text input.
-fn type_box_rect(h: &Harness<'static, PdfCraftApp>) -> egui::Rect {
+fn type_box_rect(h: &Harness<'static, PdfromeoApp>) -> egui::Rect {
     h.query_all_by_role(egui::accesskit::Role::TextInput).find(|n| n.is_focused()).expect("an open type box").rect()
 }
 
@@ -176,7 +176,7 @@ fn fill_text_size_controls_new_text_and_survives_settings_restore() {
         h.state().session.get(h.state().views[0].id).unwrap().info.annotations.iter().find(|a| a.contents.as_deref() == Some("Larger text")).unwrap();
     assert!(annotation.rect[3] - annotation.rect[1] > 24.0, "24 pt text has a larger annotation: {annotation:?}");
     let settings = h.state().persist();
-    let mut restored = PdfCraftApp::new();
+    let mut restored = PdfromeoApp::new();
     restored.restore(&settings);
     assert_eq!(restored.fill_text_size, 24.0);
     restored.restore(r#"{"fill_text_size":1000000}"#);
@@ -194,13 +194,13 @@ fn fill_text_size_resizes_the_selected_text() {
     h.run_steps(1);
     h.key_press(egui::Key::Enter);
     h.run_steps(3);
-    let height = |h: &Harness<'static, PdfCraftApp>| {
+    let height = |h: &Harness<'static, PdfromeoApp>| {
         let s = h.state();
         let a = s.session.get(s.views[0].id).unwrap().info.annotations.iter().find(|a| a.contents.as_deref() == Some("Resize me")).cloned().unwrap();
         a.rect[3] - a.rect[1]
     };
     let before = height(&h);
-    let set_size = |h: &mut Harness<'static, PdfCraftApp>, value: &str| {
+    let set_size = |h: &mut Harness<'static, PdfromeoApp>, value: &str| {
         h.query_all_by_role(egui::accesskit::Role::SpinButton)
             .find(|n| n.value().is_some_and(|v| v.ends_with(" pt")))
             .expect("the Font size control")
@@ -280,7 +280,7 @@ fn signing_draws_a_signature_once_and_places_it() {
     assert_eq!(h.state().views[0].comments.selected, Some((0, 0)));
     // The signature is remembered (persisted with the app's settings).
     let saved = h.state().persist();
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(&saved);
     assert!(again.signature.is_some());
@@ -312,7 +312,7 @@ fn typed_signatures_and_initials() {
     assert_eq!(items(&h).iter().filter(|(t, _)| t == "Stamp").count(), 2);
     // Both are remembered.
     let saved = h.state().persist();
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(&saved);
     assert_eq!(again.signature, h.state().signature);
@@ -367,7 +367,7 @@ fn changing_saved_signatures_and_initials_preserves_placed_marks() {
     assert_eq!(h.state().quick_tool, QuickTool::Fill(FillTool::Initials));
     click(&mut h, 40.0, 100.0);
     assert_eq!(items(&h).len(), 3);
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(&h.state().persist());
     assert_eq!(again.signature, Some(SavedSig::Typed("Grace Hopper".into())));
@@ -447,7 +447,7 @@ fn saved_signature_cards_remove_and_add_without_changing_the_document() {
     h.run_steps(3);
     assert_eq!(h.state().signature, None);
     assert_eq!(h.state().initials, Some(SavedSig::Typed("AL".into())));
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(&h.state().persist());
     assert_eq!(again.signature, None, "removal survives restart");
@@ -513,7 +513,7 @@ fn signature_file_with_mark(test: &str, mark: std::ops::Range<u32>) -> std::path
     path
 }
 
-fn browse_image(h: &mut Harness<'static, PdfCraftApp>, path: &std::path::Path) {
+fn browse_image(h: &mut Harness<'static, PdfromeoApp>, path: &std::path::Path) {
     h.state_mut().pick_override = Some(vec![path.to_string_lossy().into_owned()]);
     h.get_by_label("Browse…").click();
     h.run_steps(3);
@@ -553,7 +553,7 @@ fn image_signatures_and_initials_can_be_imported_placed_and_remembered() {
     assert_eq!(doc.can_undo(), Some("Add initials"));
     let settings = state.persist();
     assert!(!settings.contains(&path.to_string_lossy().to_string()), "only the image is saved, never its source path");
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(&settings);
     assert_eq!(again.signature, state.signature);
@@ -715,7 +715,7 @@ fn assert_rect(actual: [f32; 4], expected: [f32; 4]) {
     assert!(actual.iter().zip(expected).all(|(a, b)| (*a - b).abs() < 0.001), "{actual:?} != {expected:?}");
 }
 
-fn pixel_at(h: &Harness<'static, PdfCraftApp>, pixels: &image::RgbaImage, x: f32, y: f32) -> [u8; 4] {
+fn pixel_at(h: &Harness<'static, PdfromeoApp>, pixels: &image::RgbaImage, x: f32, y: f32) -> [u8; 4] {
     let p = at(h, x, y);
     pixels.get_pixel(p.x.round() as u32, p.y.round() as u32).0
 }
@@ -1020,7 +1020,7 @@ fn image_import_cancel_clear_and_errors_preserve_saved_signatures() {
     h.run_steps(3);
     assert!(h.state().signature_draft.image.is_none());
     // Malformed settings are ignored while legacy typed/drawn values still restore.
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(r#"{"signature_text":"Ada","signature_image":{"Image":"bm90IGFuIGltYWdl"},"initials":{"Image":"%%%"}}"#);
     assert_eq!(again.signature, Some(SavedSig::Typed("Ada".into())));
@@ -1030,15 +1030,15 @@ fn image_import_cancel_clear_and_errors_preserve_saved_signatures() {
 
 #[test]
 fn flatten_on_save_is_off_by_default_and_round_trips() {
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     assert!(!app.flatten_fill_sign_on_save);
     app.set_option("flatten-fill-sign", "true").unwrap();
     assert!(app.set_option("flatten-fill-sign", "yes").is_err());
-    let mut restored = PdfCraftApp::new();
+    let mut restored = PdfromeoApp::new();
     restored.restore(&app.persist());
     assert!(restored.flatten_fill_sign_on_save);
     restored.set_option("flatten-fill-sign", "false").unwrap();
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.restore(&restored.persist());
     assert!(!again.flatten_fill_sign_on_save);
 }
@@ -1060,7 +1060,7 @@ fn saving_flattens_fill_and_sign_only_when_the_preference_is_on() {
         author: "Ada".into(),
     });
 
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.open_bytes("form.pdf", None, FIXTURE.to_vec()).unwrap();
     let id = app.views[0].id;
     app.session.apply(id, mark).unwrap();
@@ -1068,7 +1068,7 @@ fn saving_flattens_fill_and_sign_only_when_the_preference_is_on() {
     let kept = dir.join("kept.pdf");
     app.save_override = Some(kept.to_string_lossy().into_owned());
     assert!(app.save_active(SaveTarget::InPlace));
-    let mut reopened = PdfCraftApp::new();
+    let mut reopened = PdfromeoApp::new();
     reopened.open_bytes("kept.pdf", None, std::fs::read(&kept).unwrap()).unwrap();
     let texts: Vec<String> =
         reopened.session.get(reopened.views[0].id).unwrap().info.annotations.iter().map(|a| a.contents.clone().unwrap_or_default()).collect();
@@ -1080,7 +1080,7 @@ fn saving_flattens_fill_and_sign_only_when_the_preference_is_on() {
     let flat = dir.join("flat.pdf");
     app.save_override = Some(flat.to_string_lossy().into_owned());
     assert!(app.save_active(SaveTarget::InPlace));
-    let mut flattened = PdfCraftApp::new();
+    let mut flattened = PdfromeoApp::new();
     flattened.open_bytes("flat.pdf", None, std::fs::read(&flat).unwrap()).unwrap();
     let left = &flattened.session.get(flattened.views[0].id).unwrap().info.annotations;
     assert!(left.is_empty(), "text and the check mark are page content: {left:?}");
@@ -1168,7 +1168,7 @@ fn drawn_and_typed_signatures_stay_upright_on_rotated_pages() {
 }
 
 /// Press, move in steps and release, from one user-space point to another.
-fn drag(h: &mut Harness<'static, PdfCraftApp>, from: (f32, f32), to: (f32, f32)) {
+fn drag(h: &mut Harness<'static, PdfromeoApp>, from: (f32, f32), to: (f32, f32)) {
     let (a, b) = (at(h, from.0, from.1), at(h, to.0, to.1));
     h.hover_at(a);
     h.run_steps(1);
@@ -1182,7 +1182,7 @@ fn drag(h: &mut Harness<'static, PdfCraftApp>, from: (f32, f32), to: (f32, f32))
     h.run_steps(4);
 }
 
-fn rects(h: &Harness<'static, PdfCraftApp>) -> Vec<[f32; 4]> {
+fn rects(h: &Harness<'static, PdfromeoApp>) -> Vec<[f32; 4]> {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().info.annotations.iter().map(|a| a.rect).collect()
 }
@@ -1326,7 +1326,7 @@ fn lines_grow_and_shrink_with_their_handles_before_release() {
         // A line runs across the page as /Rotate displays it (#3781): along user y on a quarter turn.
         // `d` is the distance along the line from the click at (100, 250).
         let along =
-            |h: &Harness<'static, PdfCraftApp>, d: f32| if document_rotation == 90 { at(h, 100.0, 250.0 + d) } else { at(h, 100.0 + d, 250.0) };
+            |h: &Harness<'static, PdfromeoApp>, d: f32| if document_rotation == 90 { at(h, 100.0, 250.0 + d) } else { at(h, 100.0 + d, 250.0) };
         let line = |from: f32, to: f32| {
             if document_rotation == 90 { [98.0, 250.0 + from, 102.0, 250.0 + to] } else { [100.0 + from, 248.0, 100.0 + to, 252.0] }
         };
@@ -1450,7 +1450,7 @@ fn signature_photo(test: &str) -> std::path::PathBuf {
     path
 }
 
-fn choose_photo(h: &mut Harness<'static, PdfCraftApp>, path: &std::path::Path) {
+fn choose_photo(h: &mut Harness<'static, PdfromeoApp>, path: &std::path::Path) {
     h.state_mut().pick_override = Some(vec![path.to_string_lossy().into_owned()]);
     h.get_by_label("Choose photo…").click();
     h.run_steps(3);
@@ -1458,7 +1458,7 @@ fn choose_photo(h: &mut Harness<'static, PdfCraftApp>, path: &std::path::Path) {
 }
 
 /// Scans run on a worker thread: step frames until the answer has been picked up.
-fn settle_scan(h: &mut Harness<'static, PdfCraftApp>) {
+fn settle_scan(h: &mut Harness<'static, PdfromeoApp>) {
     for _ in 0..1000 {
         if !h.state().signature_draft.scan.as_ref().is_some_and(|s| s.scanning()) {
             h.run_steps(1);
@@ -1568,7 +1568,7 @@ fn scanned_signatures_are_framed_cleaned_adjusted_placed_and_remembered() {
     let settings = h.state().persist();
     assert!(!settings.contains(&path.to_string_lossy().to_string()));
     assert!(settings.len() < 200_000, "only the trimmed signature is kept: {} bytes", settings.len());
-    let mut again = PdfCraftApp::new();
+    let mut again = PdfromeoApp::new();
     again.set_option("language", "en").unwrap();
     again.restore(&settings);
     assert_eq!(again.signature, h.state().signature);
@@ -1661,17 +1661,17 @@ fn photos_and_images_dropped_on_the_signature_pad_are_imported_not_opened() {
 }
 
 /// Where a mode bar tab is, by its label.
-fn mode_tab(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
+fn mode_tab(h: &Harness<'static, PdfromeoApp>, label: &str) -> egui::Rect {
     h.get_all_by_role_and_label(egui::accesskit::Role::Button, label).map(|n| n.rect()).find(|r| r.bottom() < 120.0).expect("a mode tab")
 }
 
 /// Scroll the page until `what` (on screen) lies across the mode bar, then the cursor over each
 /// tab it lies under: with the All tools panel closed, every tab: All tools, Edit, Convert and E-Sign.
 fn mode_tab_cursors(
-    h: &mut Harness<'static, PdfCraftApp>,
-    what: impl Fn(&Harness<'static, PdfCraftApp>) -> egui::Rect,
+    h: &mut Harness<'static, PdfromeoApp>,
+    what: impl Fn(&Harness<'static, PdfromeoApp>) -> egui::Rect,
 ) -> [(&'static str, egui::CursorIcon); 4] {
-    let page = |h: &Harness<'static, PdfCraftApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
+    let page = |h: &Harness<'static, PdfromeoApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
     let y = what(h).center().y - page(h).top();
     let tabs = mode_tab(h, "Convert").center().y;
     h.state_mut().views[0].goto = Some((0, 0.0));

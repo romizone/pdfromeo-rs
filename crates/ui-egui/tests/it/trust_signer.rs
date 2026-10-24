@@ -6,7 +6,7 @@
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_engine::SignatureStatus;
-use pdfcraft_ui_egui::{PdfCraftApp, SignStep};
+use pdfcraft_ui_egui::{PdfromeoApp, SignStep};
 
 const FIXTURE: &[u8] = b"%PDF-1.7
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
@@ -28,9 +28,9 @@ fn dir() -> std::path::PathBuf {
     d
 }
 
-fn harness(dir: std::path::PathBuf) -> Harness<'static, PdfCraftApp> {
+fn harness(dir: std::path::PathBuf) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("contract.pdf", None, FIXTURE.to_vec()).expect("opens");
         app.set_option("left", "closed").unwrap();

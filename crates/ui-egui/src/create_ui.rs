@@ -3,7 +3,7 @@
 
 use std::sync::Arc;
 
-use crate::PdfCraftApp;
+use crate::PdfromeoApp;
 use crate::widgets;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -20,7 +20,7 @@ pub struct ImageImport {
     pub dpi: f64,
 }
 
-pub(crate) fn image_import_body(ui: &mut egui::Ui, app: &mut PdfCraftApp) -> (bool, bool) {
+pub(crate) fn image_import_body(ui: &mut egui::Ui, app: &mut PdfromeoApp) -> (bool, bool) {
     ui.heading(tl!("Create PDF from images"));
     let Some(draft) = app.image_import.as_mut() else { return (false, true) };
     ui.label(crate::i18n::fmt(tl!("Selected image files: {count}"), &[("count", &draft.images.len().to_string())]));
@@ -85,7 +85,7 @@ fn stem(name: &str) -> &str {
     name.rsplit_once('.').map_or(name, |(s, _)| s)
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Convert a non-PDF file (image, text) into a new tab. Returns `None` when `bytes` is not
     /// something Create understands (the caller then tries to open it as a PDF).
     pub(crate) fn open_converted(&mut self, name: &str, bytes: &[u8]) -> Option<Result<(), String>> {
@@ -260,7 +260,7 @@ impl PdfCraftApp {
             );
             return;
         }
-        let saved = move |app: &mut PdfCraftApp, place: String| {
+        let saved = move |app: &mut PdfromeoApp, place: String| {
             let (b, a) = (crate::panels::human_size(before), crate::panels::human_size(after));
             if after < before {
                 let pct = 100.0 * (1.0 - after as f64 / before.max(1) as f64);

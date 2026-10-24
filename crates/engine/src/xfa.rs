@@ -890,7 +890,7 @@ pub(crate) fn template(doc: &pdfcraft_cos::Document) -> Option<Arc<Template>> {
     pdfcraft_xfa::template_of(doc).ok().filter(pdfcraft_xfa::has_scripts).map(Arc::new)
 }
 
-/// Push buttons PdfCraft generated for XFA click scripts carry no PDF action (the script is
+/// Push buttons Pdfromeo generated for XFA click scripts carry no PDF action (the script is
 /// XFA's, not Acrobat JavaScript): give them one that runs the script by the field's SOM path.
 pub(crate) fn mark_script_buttons(doc: &pdfcraft_cos::Document, fields: &mut [pdfcraft_forms::Field]) {
     for f in fields.iter_mut() {

@@ -211,7 +211,7 @@ fn row<T>(ui: &mut egui::Ui, label: &str, c: &mut Change<T>, edit: impl FnOnce(&
     ui.end_row();
 }
 
-impl crate::PdfCraftApp {
+impl crate::PdfromeoApp {
     pub(crate) fn apply_bulk_field_props(&mut self) -> bool {
         let result = self.bulk_field_props.as_ref().ok_or("The field properties dialog is no longer open.".to_string()).and_then(|d| {
             if self.active_ids().map(|(_, id)| id) != Some(d.doc) {

@@ -6,7 +6,7 @@ use egui::{Align, Color32, CornerRadius, Layout, Rect, Stroke, pos2, vec2};
 use pdfcraft_engine::{Background, Edit, FontFamily, HeaderFooter, MarkKind, Watermark};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, widgets};
+use crate::{PdfromeoApp, widgets};
 
 /// How far a watermark may be moved from the page centre, in points.
 const MAX_OFFSET: f64 = 20_000.0;
@@ -142,7 +142,7 @@ fn rgb32(c: [f64; 3]) -> Color32 {
 }
 
 /// The dialog for `kind`; returns (apply, cancel).
-pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens, kind: MarkKind) -> (bool, bool) {
+pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens, kind: MarkKind) -> (bool, bool) {
     let Some((i, id)) = app.active_ids() else { return (false, true) };
     let current = app.views[i].current;
     let Some(doc) = app.session.get(id) else { return (false, true) };

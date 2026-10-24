@@ -91,14 +91,14 @@ fn corpus_parity() {
                 return Err(format!("page count {:?} vs hayro {expected}", page_count(&doc)));
             }
             let root = doc.root().ok_or("no root")?;
-            doc.update_dict(root, |d| d.set(b"PdfCraftTest".to_vec(), Object::Bool(true))).map_err(|e| e.to_string())?;
+            doc.update_dict(root, |d| d.set(b"PdfromeoTest".to_vec(), Object::Bool(true))).map_err(|e| e.to_string())?;
             let saved = write_incremental(&doc, &SaveOptions::default()).map_err(|e| format!("save: {e}"))?;
             // Reconstructed files are rewritten in full; everything else must keep its bytes.
             if !doc.revisions().is_empty() && saved.get(..bytes.len()) != Some(&bytes[..]) {
                 return Err("prefix modified".into());
             }
             let again = Document::open(Arc::new(saved.clone())).map_err(|e| format!("reopen: {e}"))?;
-            let flag = again.get(again.root().ok_or("no root after save")?).as_dict().and_then(|d| d.get(b"PdfCraftTest").cloned());
+            let flag = again.get(again.root().ok_or("no root after save")?).as_dict().and_then(|d| d.get(b"PdfromeoTest").cloned());
             if flag != Some(Object::Bool(true)) {
                 return Err("edit lost after reopen".into());
             }
@@ -161,7 +161,7 @@ fn corpus_passwords() {
                     continue;
                 }
                 let root = doc.root().unwrap();
-                doc.update_dict(root, |d| d.set(b"PdfCraftTest".to_vec(), Object::Bool(true))).unwrap();
+                doc.update_dict(root, |d| d.set(b"PdfromeoTest".to_vec(), Object::Bool(true))).unwrap();
                 let saved = write_incremental(&doc, &SaveOptions::default()).unwrap();
                 match Document::open_with_password(Arc::new(saved.clone()), Some(pw)) {
                     Ok(again) if page_count(&again) == pages => {}

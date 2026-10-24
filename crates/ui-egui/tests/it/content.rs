@@ -4,25 +4,25 @@
 use egui::{Pos2, pos2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::{PdfCraftApp, QuickTool};
+use pdfcraft_ui_egui::{PdfromeoApp, QuickTool};
 
 use crate::gpu;
 
-fn harness() -> Harness<'static, PdfCraftApp> {
+fn harness() -> Harness<'static, PdfromeoApp> {
     harness_with_step_dt(0.25)
 }
 
-fn harness_with_step_dt(step_dt: f32) -> Harness<'static, PdfCraftApp> {
+fn harness_with_step_dt(step_dt: f32) -> Harness<'static, PdfromeoApp> {
     harness_bytes_with_step_dt(include_bytes!("../data/form.pdf").to_vec(), step_dt)
 }
 
-fn harness_bytes(bytes: Vec<u8>) -> Harness<'static, PdfCraftApp> {
+fn harness_bytes(bytes: Vec<u8>) -> Harness<'static, PdfromeoApp> {
     harness_bytes_with_step_dt(bytes, 0.25)
 }
 
-fn harness_bytes_with_step_dt(bytes: Vec<u8>, step_dt: f32) -> Harness<'static, PdfCraftApp> {
+fn harness_bytes_with_step_dt(bytes: Vec<u8>, step_dt: f32) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).with_step_dt(step_dt).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("form.pdf", None, bytes.clone()).unwrap();
         app.set_option("zoom", "150").unwrap();
@@ -38,13 +38,13 @@ fn harness_bytes_with_step_dt(bytes: Vec<u8>, step_dt: f32) -> Harness<'static, 
     h
 }
 
-fn at(h: &Harness<'static, PdfCraftApp>, x: f32, y: f32) -> Pos2 {
+fn at(h: &Harness<'static, PdfromeoApp>, x: f32, y: f32) -> Pos2 {
     let r = h.state().views[0].page_screen_rect(0).expect("on screen");
     let k = r.width() / 300.0;
     r.min + egui::vec2(x * k, y * k)
 }
 
-fn click(h: &mut Harness<'static, PdfCraftApp>, p: Pos2) {
+fn click(h: &mut Harness<'static, PdfromeoApp>, p: Pos2) {
     h.hover_at(p);
     h.run_steps(1);
     h.drag_at(p);
@@ -53,13 +53,13 @@ fn click(h: &mut Harness<'static, PdfCraftApp>, p: Pos2) {
     h.run_steps(3);
 }
 
-fn added(h: &Harness<'static, PdfCraftApp>) -> Vec<pdfcraft_engine::Added> {
+fn added(h: &Harness<'static, PdfromeoApp>) -> Vec<pdfcraft_engine::Added> {
     let s = h.state();
     s.session.get(s.views[0].id).unwrap().added().to_vec()
 }
 
 /// A click whose press and release arrive in the same frame, as a quick real mouse click does.
-fn quick_click(h: &mut Harness<'static, PdfCraftApp>, p: Pos2) {
+fn quick_click(h: &mut Harness<'static, PdfromeoApp>, p: Pos2) {
     h.hover_at(p);
     h.run_steps(1);
     for pressed in [true, false] {
@@ -68,7 +68,7 @@ fn quick_click(h: &mut Harness<'static, PdfCraftApp>, p: Pos2) {
     h.run_steps(3);
 }
 
-fn texts(h: &Harness<'static, PdfCraftApp>) -> Vec<String> {
+fn texts(h: &Harness<'static, PdfromeoApp>) -> Vec<String> {
     added(h)
         .into_iter()
         .filter_map(|a| match a.content {
@@ -286,7 +286,7 @@ fn a_picture_on_the_clipboard_is_pasted_onto_the_page() {
     use pdfcraft_ui_egui::Clip;
     let mut h = harness();
     let v = |pressed, modifiers| egui::Event::Key { key: egui::Key::V, physical_key: None, pressed, repeat: false, modifiers };
-    let images = |h: &Harness<'static, PdfCraftApp>| added(h).iter().filter(|a| matches!(a.content, pdfcraft_engine::AddedContent::Image(_))).count();
+    let images = |h: &Harness<'static, PdfromeoApp>| added(h).iter().filter(|a| matches!(a.content, pdfcraft_engine::AddedContent::Image(_))).count();
     // Text on the clipboard: egui gets a Paste event instead of the press; nothing lands on the page.
     h.state_mut().clipboard_override = Some(Clip::Text("hello".into()));
     h.event(egui::Event::Paste("hello".into()));
@@ -461,7 +461,7 @@ fn finished_text_over_form_field_keeps_selection_and_drag_ownership() {
     assert_eq!(h.state().views[0].forms.focus.as_ref().map(|f| f.name.as_str()), Some("city"));
 }
 
-fn text_over_city() -> Harness<'static, PdfCraftApp> {
+fn text_over_city() -> Harness<'static, PdfromeoApp> {
     let mut h = harness_with_step_dt(1.0 / 60.0);
     assert!(h.state_mut().execute("edit.text"));
     h.run_steps(2);
@@ -531,7 +531,7 @@ fn closing_edit_panel_leaves_form_filling_available() {
 }
 
 /// The screen rectangle of an added item's display-space box (y up, from the page's bottom).
-fn item_on_screen(h: &Harness<'static, PdfCraftApp>, r: [f64; 4]) -> egui::Rect {
+fn item_on_screen(h: &Harness<'static, PdfromeoApp>, r: [f64; 4]) -> egui::Rect {
     let s = h.state();
     let ph = s.session.get(s.views[0].id).unwrap().info.pages[0].height;
     let page = s.views[0].page_screen_rect(0).expect("on screen");
@@ -555,14 +555,14 @@ fn probe(r: egui::Rect) -> egui::Rect {
 }
 
 /// Ink in the probes of the text's first and dragged places.
-fn ink_at(h: &mut Harness<'static, PdfCraftApp>, from: egui::Rect, to: egui::Rect) -> (usize, usize) {
+fn ink_at(h: &mut Harness<'static, PdfromeoApp>, from: egui::Rect, to: egui::Rect) -> (usize, usize) {
     let pixels = h.render().unwrap();
     (ink(&pixels, probe(from)), ink(&pixels, probe(to)))
 }
 
 /// Types text, finishes it, and drags it up without releasing, until the drag preview shows.
 /// Returns the text's box, its screen rectangles before and after, and the pointer.
-fn drag_added_text(h: &mut Harness<'static, PdfCraftApp>) -> ([f64; 4], egui::Rect, egui::Rect, Pos2) {
+fn drag_added_text(h: &mut Harness<'static, PdfromeoApp>) -> ([f64; 4], egui::Rect, egui::Rect, Pos2) {
     assert!(h.state_mut().execute("edit.text"));
     h.run_steps(2);
     let p = at(h, 40.0, 300.0);
@@ -658,7 +658,7 @@ fn released_text_does_not_jump_back_before_the_page_is_redrawn() {
 }
 
 /// Format text is laid out as Acrobat's: alignment from its flyout, style buttons by name, and
-/// the controls PdfCraft can't apply yet present but disabled.
+/// the controls Pdfromeo can't apply yet present but disabled.
 /// Format text lines its rows up (#3037): the size list is centred beside the colour swatch and
 /// the alignment button and is as tall as the font list, each spacing row's controls share one
 /// line, and nothing reaches past the font list, which spans the panel.
@@ -669,7 +669,7 @@ fn format_text_rows_line_up_and_fit_the_panel() {
     assert!(h.state_mut().execute("edit.text"));
     h.run_steps(3);
     h.get_by_label("FORMAT TEXT");
-    let combo = |h: &Harness<'static, PdfCraftApp>, value: &str| {
+    let combo = |h: &Harness<'static, PdfromeoApp>, value: &str| {
         h.query_all_by_role(Role::ComboBox).find(|n| n.value().as_deref() == Some(value)).map(|n| n.rect()).expect(value)
     };
     let (font, size) = (combo(&h, "Helvetica"), combo(&h, "12"));
@@ -715,17 +715,17 @@ fn format_text_panel_sets_alignment_and_lists_planned_controls_disabled() {
 }
 
 /// Where a mode bar tab is, by its label.
-fn mode_tab(h: &Harness<'static, PdfCraftApp>, label: &str) -> egui::Rect {
+fn mode_tab(h: &Harness<'static, PdfromeoApp>, label: &str) -> egui::Rect {
     h.get_all_by_role_and_label(egui::accesskit::Role::Button, label).map(|n| n.rect()).find(|r| r.bottom() < 120.0).expect("a mode tab")
 }
 
 /// Scroll the page until `what` (on screen) lies across the mode bar, then the cursor over each
 /// tab it lies under: with the All tools panel closed, every tab: All tools, Edit, Convert and E-Sign.
 fn mode_tab_cursors(
-    h: &mut Harness<'static, PdfCraftApp>,
-    what: impl Fn(&Harness<'static, PdfCraftApp>) -> egui::Rect,
+    h: &mut Harness<'static, PdfromeoApp>,
+    what: impl Fn(&Harness<'static, PdfromeoApp>) -> egui::Rect,
 ) -> [(&'static str, egui::CursorIcon); 4] {
-    let page = |h: &Harness<'static, PdfCraftApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
+    let page = |h: &Harness<'static, PdfromeoApp>| h.state().views[0].page_screen_rect(0).expect("on screen");
     let y = what(h).center().y - page(h).top();
     let tabs = mode_tab(h, "Convert").center().y;
     h.state_mut().views[0].goto = Some((0, 0.0));
@@ -779,7 +779,7 @@ fn mode_tabs_keep_the_hand_over_added_text_scrolled_under_them() {
     let kept = added(&h)[0].content.rect();
     assert_eq!(mode_tab_cursors(&mut h, |h| item_on_screen(h, kept)), HAND_ON_EVERY_TAB, "added text under the tabs");
     // The second box, still being typed.
-    let draft = |h: &Harness<'static, PdfCraftApp>| item_on_screen(h, h.state().views[0].content.draft.as_ref().expect("the open box").rect);
+    let draft = |h: &Harness<'static, PdfromeoApp>| item_on_screen(h, h.state().views[0].content.draft.as_ref().expect("the open box").rect);
     assert_eq!(mode_tab_cursors(&mut h, draft), HAND_ON_EVERY_TAB, "the open box under the tabs");
     let convert = mode_tab(&h, "Convert").center();
     click(&mut h, convert);
@@ -796,7 +796,7 @@ fn red(pixels: &image::RgbaImage, r: egui::Rect) -> usize {
 }
 
 /// Steps until no render is pending.
-fn settle(h: &mut Harness<'static, PdfCraftApp>) {
+fn settle(h: &mut Harness<'static, PdfromeoApp>) {
     for _ in 0..200 {
         h.run_steps(1);
         if !h.state().render_pending() {

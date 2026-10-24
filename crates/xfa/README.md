@@ -6,7 +6,7 @@ XFA forms (XFA 3.3, the template and layout parts). Layer L3; depends on `pdfcra
 A dynamic XFA form is a PDF shell around an XML template (`/AcroForm /XFA`): one placeholder page
 ("requires Adobe Reader") and `/NeedsRendering true`. Viewers without an XFA engine show the
 placeholder. This crate reads the template, lays it out, and writes ordinary pages and AcroForm
-fields into the document, so everything else in PdfCraft (rendering, filling, saving, printing,
+fields into the document, so everything else in Pdfromeo (rendering, filling, saving, printing,
 the automation tools) works on it unchanged. The engine does this when it opens such a form,
 and repeats layout after an edited multiline text field without a fixed height changes value.
 This uses the final datasets after calculations, including on forms without scripts; pages
@@ -71,14 +71,14 @@ be measured exponentially often in their nesting. A measurement budget backs thi
   its own PDF field to the shared XFA click script, so clicking an early copy works as well
   as the last, including through `js_run` and after save/reopen.
 
-  Private keys PdfCraft writes (other viewers ignore them):
+  Private keys Pdfromeo writes (other viewers ignore them):
 
   | Key | Where | Holds |
   | --- | --- | --- |
   | `/PCSom` | generated fields | the field's SOM path, so values go back to the data |
   | `/PCXfaLayout` | AcroForm | what laying out produced, so a saved form is not laid out again |
   | `/PCXfaOverrides` | AcroForm | `<< /Presence << /som (hidden) … >> /Access << /som (readOnly) … >> >>`: presence and access scripts set, by SOM path (instance 0 of a repeating subform stands for all); applied to the template before every layout, so undo, save and reopen keep them. Adobe's viewers draw from the XFA packets and don't read it; at most 10 000 entries are read or written |
-  | `/PCXfaClick` | generated push buttons | `true`: the template has a click script for this button. Such buttons carry no `/A`: XFA JavaScript is not Acrobat JavaScript, so it is never written as a `/S /JavaScript` action other viewers would run. PdfCraft finds the script by the field's `/PCSom` |
+  | `/PCXfaClick` | generated push buttons | `true`: the template has a click script for this button. Such buttons carry no `/A`: XFA JavaScript is not Acrobat JavaScript, so it is never written as a `/S /JavaScript` action other viewers would run. Pdfromeo finds the script by the field's `/PCSom` |
 
 ## API sketch
 

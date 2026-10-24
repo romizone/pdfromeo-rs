@@ -7,7 +7,7 @@ use egui::{Align, Color32, CornerRadius, Layout, Rect, Stroke, pos2, vec2};
 use pdfcraft_engine::{BoxSpec, Edit, PageBox};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, widgets};
+use crate::{PdfromeoApp, widgets};
 
 pub use crate::units::Unit;
 
@@ -64,7 +64,7 @@ fn box_index(b: PageBox) -> usize {
 }
 
 /// Draw the dialog body; returns (apply, cancel).
-pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> (bool, bool) {
     let Some((i, id)) = app.active_ids() else { return (false, true) };
     let current = app.views[i].current;
     let Some(doc) = app.session.get(id) else { return (false, true) };

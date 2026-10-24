@@ -57,7 +57,7 @@ let cells: Vec<table::Cell> = grid.cells_for(names)?;      // "Table1_1", "Table
   drawing while the objects it was drawn from are the same (`FieldAppearanceCache`), so typing in
   one field redraws that field, not the form.
 - Check boxes and radio buttons switch `/V` and each widget's `/AS`. Widgets with no appearances
-  get PdfCraft's own (a drawn check mark or dot; no symbol font needed).
+  get Pdfromeo's own (a drawn check mark or dot; no symbol font needed).
 - Imported `/MaxLen 0` is treated as unlimited (also clearing an inherited limit), while the
   original entry is preserved. Positive limits still apply.
 - Values are validated (options, `MaxLen`, single vs multi-select, NoToggleToOff, read-only) and a

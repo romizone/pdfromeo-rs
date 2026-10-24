@@ -326,7 +326,7 @@ pub enum LinkTarget {
     },
     /// A local-file remote Go-To action. The caller resolves `file` relative to the source path.
     /// `launch` marks a Launch action that names a PDF file (see `launch_pdf`), opened the same
-    /// way: as a document in PdfCraft, never by the operating system.
+    /// way: as a document in Pdfromeo, never by the operating system.
     RemoteGoTo {
         launch: bool,
         file: String,

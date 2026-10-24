@@ -5,7 +5,7 @@ use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use serde_json::{Value, json};
 
-use crate::{PdfCraftApp, control::ControlClient, open_worker};
+use crate::{PdfromeoApp, control::ControlClient, open_worker};
 
 fn fixture(pages: usize) -> Vec<u8> {
     let mut objects = vec!["<< /Type /Catalog /Pages 2 0 R >>".to_string()];
@@ -33,11 +33,11 @@ fn fixture(pages: usize) -> Vec<u8> {
 }
 
 #[allow(clippy::expect_used, clippy::panic, clippy::unwrap_used)]
-fn harness() -> (Harness<'static, PdfCraftApp>, ControlClient) {
+fn harness() -> (Harness<'static, PdfromeoApp>, ControlClient) {
     let slot: Arc<Mutex<Option<ControlClient>>> = Arc::default();
     let saved = slot.clone();
     let mut harness = Harness::builder().with_size(egui::vec2(1000.0, 700.0)).build_eframe(move |creation| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").expect("language preference");
         *saved.lock().expect("control-client slot") = Some(app.attach_control(&creation.egui_ctx));
         app.open_bytes("existing.pdf", None, fixture(3)).expect("existing document");
@@ -48,7 +48,7 @@ fn harness() -> (Harness<'static, PdfCraftApp>, ControlClient) {
 }
 
 #[allow(clippy::expect_used, clippy::panic, clippy::unwrap_used)]
-fn request(harness: &mut Harness<'static, PdfCraftApp>, client: &ControlClient, method: &str, params: Value) -> Value {
+fn request(harness: &mut Harness<'static, PdfromeoApp>, client: &ControlClient, method: &str, params: Value) -> Value {
     let reply = client.send(method, params);
     for _ in 0..5 {
         harness.step();
@@ -105,7 +105,7 @@ fn tool_open_file(case: &str, extension: &str, bytes: &[u8]) -> ToolOpenFile {
     ToolOpenFile(path)
 }
 
-fn tool_open_harness() -> Harness<'static, PdfCraftApp> {
+fn tool_open_harness() -> Harness<'static, PdfromeoApp> {
     let (mut harness, _) = harness();
     harness.state_mut().close_tab(0);
     harness.run_steps(2);
@@ -119,7 +119,7 @@ struct HeldToolOpen {
 }
 
 impl HeldToolOpen {
-    fn install(harness: &mut Harness<'static, PdfCraftApp>) -> Self {
+    fn install(harness: &mut Harness<'static, PdfromeoApp>) -> Self {
         let (gate, started, release, finished) = open_worker::prepare_gate();
         harness.state_mut().open_prepare_gate = Some(gate);
         Self { started, release, finished }
@@ -131,14 +131,14 @@ impl HeldToolOpen {
     }
 
     #[allow(clippy::expect_used)]
-    fn complete(&self, harness: &mut Harness<'static, PdfCraftApp>) {
+    fn complete(&self, harness: &mut Harness<'static, PdfromeoApp>) {
         self.release.send(()).expect("release the native preparation");
         self.finished.recv_timeout(Duration::from_secs(5)).expect("the native open returned its result");
         harness.run_steps(2);
     }
 }
 
-fn choose_export_tool(harness: &mut Harness<'static, PdfCraftApp>, file: &ToolOpenFile) {
+fn choose_export_tool(harness: &mut Harness<'static, PdfromeoApp>, file: &ToolOpenFile) {
     harness.state_mut().pick_override = Some(vec![file.0.to_string_lossy().into_owned()]);
     harness.state_mut().run_command("export.text");
     harness.run_steps(2);
@@ -617,7 +617,7 @@ fn inline_tool_open_keeps_its_command_for_pdf_conversion_and_password_retry() {
     {
         let path = std::env::temp_dir().join(format!("pdfcraft-inline-tool-{}-{name}", std::process::id()));
         std::fs::write(&path, bytes).expect("write selected file");
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").expect("language preference");
         assert!(app.ctx.is_none(), "this exercises the no-context inline path");
         app.open_path_then(&path.to_string_lossy(), Some("export.text"));

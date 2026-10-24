@@ -4,7 +4,7 @@
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_engine::Session;
-use pdfcraft_ui_egui::{PdfCraftApp, RightPanel};
+use pdfcraft_ui_egui::{PdfromeoApp, RightPanel};
 
 #[test]
 fn compare_two_versions() {
@@ -12,7 +12,7 @@ fn compare_two_versions() {
     let v1 = s.create_from_text("t", "Delivery within five days. Returns accepted.").unwrap().to_vec();
     let v2 = s.create_from_text("t", "Delivery within three days. Returns accepted for a week.").unwrap().to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("v1.pdf", None, v1.clone()).unwrap();
         app.open_bytes("v2.pdf", None, v2.clone()).unwrap();
@@ -60,12 +60,12 @@ fn compare_two_versions() {
 }
 
 /// Two versions compared side by side (old `v1.pdf` left, new `v2.pdf` right).
-fn side_by_side() -> Harness<'static, PdfCraftApp> {
+fn side_by_side() -> Harness<'static, PdfromeoApp> {
     let s = Session::new();
     let v1 = s.create_from_text("t", "Delivery within five days. Returns accepted.").unwrap().to_vec();
     let v2 = s.create_from_text("t", "Delivery within three days. Returns accepted for a week.").unwrap().to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("v1.pdf", None, v1.clone()).unwrap();
         app.open_bytes("v2.pdf", None, v2.clone()).unwrap();
@@ -118,7 +118,7 @@ fn text_and_visual_versions() -> (Vec<u8>, Vec<u8>) {
 fn compare_filters_hide_text_or_visual_changes() {
     let (v1, v2) = text_and_visual_versions();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("v1.pdf", None, v1.clone()).unwrap();
         app.open_bytes("v2.pdf", None, v2.clone()).unwrap();
@@ -132,7 +132,7 @@ fn compare_filters_hide_text_or_visual_changes() {
     let old_i = h.state().views.iter().position(|v| v.id == h.state().compare.as_ref().unwrap().old).unwrap();
     // Visual differences are shaded orange (compare_ui::VISUAL), text changes in their kind's colour.
     let visual = egui::Color32::from_rgb(0xF0, 0x8C, 0x1A);
-    let kinds = |h: &Harness<'_, PdfCraftApp>, i: usize| {
+    let kinds = |h: &Harness<'_, PdfromeoApp>, i: usize| {
         let marks = &h.state().views[i].compare_marks;
         (marks.iter().filter(|m| m.2 != visual).count(), marks.iter().filter(|m| m.2 == visual).count())
     };
@@ -169,7 +169,7 @@ fn compare_panel_screenshot() {
     let v1 = s.create_from_text("t", "Delivery within five days. Returns accepted.").unwrap().to_vec();
     let v2 = s.create_from_text("t", "Delivery within three days. Returns accepted for a week.").unwrap().to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("v1.pdf", None, v1.clone()).unwrap();
         app.open_bytes("v2.pdf", None, v2.clone()).unwrap();
@@ -189,7 +189,7 @@ fn compare_panel_screenshot() {
 fn pdfa_dialog_verifies_and_converts() {
     let doc = Session::new().create_from_text("t", "Keep forever").unwrap().to_vec();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("keep.pdf", None, doc.clone()).unwrap();
         app
@@ -251,7 +251,7 @@ fn pdfa_dialog_shows_a_declared_pdfua() {
     ] {
         let doc = declaring(ids);
         let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes("ua.pdf", None, doc.clone()).unwrap();
             app
@@ -268,7 +268,7 @@ fn export_to_word_html_and_rtf() {
     let doc = Session::new().create_from_text("t", "Exported words").unwrap().to_vec();
     let dir = std::env::temp_dir().join(format!("pdfcraft-office-ui-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let mut app = PdfCraftApp::new();
+    let mut app = PdfromeoApp::new();
     app.set_option("language", "en").unwrap();
     app.open_bytes("e.pdf", None, doc).unwrap();
     for ext in ["docx", "pptx", "html", "rtf"] {

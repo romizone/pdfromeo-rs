@@ -5,7 +5,7 @@ use egui::{Align2, CornerRadius, Rect, Sense, Stroke, vec2};
 use pdfcraft_engine::catalog::{Availability, TOOL_GROUPS};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, icons};
+use crate::{PdfromeoApp, icons};
 
 struct Hit {
     /// The tool panel to open (tools and catalogue items); `None` for plain commands.
@@ -39,7 +39,7 @@ fn score(hay: &str, needle: &str) -> Option<usize> {
     needle.chars().all(|c| it.any(|x| x == c)).then_some(100)
 }
 
-pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
+pub fn show(app: &mut PdfromeoApp, ctx: &egui::Context) {
     let palette_rect_id = egui::Id::new("palette_rect");
     if !app.palette_open {
         return;

@@ -259,7 +259,7 @@ fn an_existing_behind_watermark_does_not_inherit_or_reveal_hidden_content() {
 
 #[test]
 fn new_mark_closes_hidden_content_appended_after_an_old_wrapper() {
-    let bytes = fixture(&["q %PdfCraft\n".into(), VISIBLE.into(), "Q %PdfCraft\n".into(), format!("/OC /L1 BDC {HIDDEN}")]);
+    let bytes = fixture(&["q %Pdfromeo\n".into(), VISIBLE.into(), "Q %Pdfromeo\n".into(), format!("/OC /L1 BDC {HIDDEN}")]);
     let mut doc = Document::open(bytes).unwrap();
     let list = stream_list(&doc);
     for index in [0, 2] {

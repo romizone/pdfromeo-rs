@@ -13,7 +13,7 @@ use pdfcraft_engine::{DocId, Edit};
 use pdfcraft_render::{DestView, DocInfo, LayerOp, LinkTarget, PRINT_TAG, PageText, RenderPool, RenderRequest, RequestKind, Tile, device_pixels};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, QuickTool, RightPanel, comments, icons, widgets};
+use crate::{PdfromeoApp, QuickTool, RightPanel, comments, icons, widgets};
 
 /// Logical pixels per PDF point at 100% (96 dpi, like browsers).
 pub const PT: f32 = 96.0 / 72.0;
@@ -129,7 +129,7 @@ impl PageLayout {
         }
     }
 
-    /// Registry command that switches to this base layout (`PdfCraftApp::execute`).
+    /// Registry command that switches to this base layout (`PdfromeoApp::execute`).
     pub fn command(self) -> &'static str {
         match self {
             Self::Single => "view.layout.single",
@@ -362,7 +362,7 @@ pub(crate) fn signature_badges(signatures: &[pdfcraft_engine::SignatureInfo], pa
 /// A snapshot reads like its source document, plus the snapshot suffix that tells
 /// the tabs apart. Without a title the file name (which already carries the suffix)
 /// is enough.
-pub(crate) fn tab_label(app: &PdfCraftApp, index: usize) -> Option<String> {
+pub(crate) fn tab_label(app: &PdfromeoApp, index: usize) -> Option<String> {
     let view = app.views.get(index)?;
     let doc = app.session.get(view.id)?;
     let Some(snap) = view.snapshot.as_ref() else { return Some(doc.display_name()) };
@@ -2610,7 +2610,7 @@ fn page_scroll<R>(
 
 /// Draws the document tab at `index`: its notice bars, then its pages (or the Organize grid) in a
 /// scroll area with this frame's zoom, scrolling, tool input, overlays and render requests.
-pub fn document_area(app: &mut PdfCraftApp, index: usize, ui: &mut egui::Ui) {
+pub fn document_area(app: &mut PdfromeoApp, index: usize, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     // Keyboard scrolling applies to this frame's page view only, never later.
     let key_scroll = std::mem::take(&mut app.views[index].key_scroll);
@@ -4519,7 +4519,7 @@ fn selection_actions(
 }
 
 /// Run a push button's action (the ones that need no JavaScript engine).
-fn run_button(app: &mut PdfCraftApp, index: usize, name: &str, action: pdfcraft_engine::form_scripts::ButtonAction) {
+fn run_button(app: &mut PdfromeoApp, index: usize, name: &str, action: pdfcraft_engine::form_scripts::ButtonAction) {
     use pdfcraft_engine::form_scripts::ButtonAction as B;
     let pages = app.session.get(app.views[index].id).map_or(0, |d| d.info.pages.len());
     match action {
@@ -4536,7 +4536,7 @@ fn run_button(app: &mut PdfCraftApp, index: usize, name: &str, action: pdfcraft_
         }
         B::Named(n) => match n.as_str() {
             "Print" => app.open_print(),
-            // What PdfCraft's XFA buttons use, and what a script's `execMenuItem("Save")`
+            // What Pdfromeo's XFA buttons use, and what a script's `execMenuItem("Save")`
             // does too: the Save As dialog, so a click never overwrites the file unasked.
             "SaveAs" => app.run_command("file.save_as"),
             "NextPage" => app.views[index].step_page(true),
@@ -4587,7 +4587,7 @@ fn run_button(app: &mut PdfCraftApp, index: usize, name: &str, action: pdfcraft_
         }
         B::Alert(m) => app.notify(m),
         B::Submit(url) => app.notify_fmt(
-            "{name} submits the form to {url}; PdfCraft doesn't send form data. Save the document to keep your entries.",
+            "{name} submits the form to {url}; Pdfromeo doesn't send form data. Save the document to keep your entries.",
             &[("name", name), ("url", &url)],
         ),
         B::ImportIcon => app.choose_field_image(name),
@@ -4600,7 +4600,7 @@ fn run_button(app: &mut PdfCraftApp, index: usize, name: &str, action: pdfcraft_
 
 /// Run a set-layer-visibility action from a button or link. It changes what is shown, as the
 /// Layers panel does (which follows), not the document.
-fn set_layers(app: &mut PdfCraftApp, index: usize, changes: &[(LayerOp, (u32, u16))], preserve_rb: bool) {
+fn set_layers(app: &mut PdfromeoApp, index: usize, changes: &[(LayerOp, (u32, u16))], preserve_rb: bool) {
     let id = app.views[index].id;
     if app.session.set_layer_state(id, changes, preserve_rb) {
         app.views[index].invalidate_content();
@@ -4854,7 +4854,7 @@ fn notices(
     } else if info.xfa == Some(pdfcraft_render::Xfa::Dynamic) {
         Some((
             "triangle-alert",
-            tl!("This is a dynamic XFA form, which PdfCraft can't display yet. What you see is the file's placeholder page.").to_string(),
+            tl!("This is a dynamic XFA form, which Pdfromeo can't display yet. What you see is the file's placeholder page.").to_string(),
             false,
         ))
     } else if info.xfa == Some(pdfcraft_render::Xfa::Static) {
@@ -4961,7 +4961,7 @@ fn notice_bar(ui: &mut egui::Ui, t: &Tokens, icon: &str, icon_color: Color32, te
 }
 
 /// The floating quick-action bar at the left edge of the document area.
-fn quick_bar(app: &mut PdfCraftApp, area: Rect, ui: &mut egui::Ui) {
+fn quick_bar(app: &mut PdfromeoApp, area: Rect, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let pos = area.left_top() + vec2(14.0, 14.0);
     egui::Area::new(egui::Id::new("quick-bar")).order(egui::Order::Middle).fixed_pos(pos).show(ui.ctx(), |ui| {
@@ -6141,7 +6141,7 @@ trailer << /Root 1 0 R >>
     fn replacing_a_page_after_layout_never_uploads_an_oversized_texture() {
         let ctx = egui::Context::default();
         ctx.input_mut(|i| i.max_texture_side = 2048);
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         let original = app.session.create_blank(200.0, 300.0, 1).unwrap();
         let replacement = app.session.create_blank(400.0, 500.0, 1).unwrap();
         app.open_bytes("original.pdf", None, original.as_ref().clone()).unwrap();
@@ -6446,7 +6446,7 @@ trailer << /Root 1 0 R >>
     #[test]
     fn many_open_documents_share_one_raster_allowance_and_close_releases_handles() {
         let ctx = egui::Context::default();
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         let bytes = app.session.create_blank(612.0, 792.0, 1).unwrap();
         let mut expected = Vec::new();
         for index in 0..6 {
@@ -6572,7 +6572,7 @@ trailer << /Root 1 0 R >>
     #[test]
     fn edit_text_boxes_stay_drawn_while_page_input_is_blocked() {
         let mut h = egui_kittest::Harness::builder().with_size(vec2(1400.0, 900.0)).build_eframe(|_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             let bytes = app.session.create_blank(300.0, 400.0, 1).unwrap();
             app.open_bytes("blank.pdf", None, bytes.as_ref().clone()).unwrap();
             app.quick_tool = QuickTool::EditText;
@@ -6594,7 +6594,7 @@ trailer << /Root 1 0 R >>
         use egui_kittest::kittest::Queryable;
 
         let mut h = egui_kittest::Harness::builder().with_size(vec2(1400.0, 900.0)).build_eframe(|_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             let bytes = app.session.create_blank(300.0, 400.0, 100).unwrap();
             app.open_bytes("organize-gaps.pdf", None, bytes.as_ref().clone()).unwrap();
             app.views[0].organize = true;
@@ -6624,7 +6624,7 @@ trailer << /Root 1 0 R >>
     #[test]
     fn real_shell_pages_organizer_and_print_only_collect_current_thumbnail_consumers() {
         let mut h = egui_kittest::Harness::builder().with_size(vec2(1400.0, 900.0)).build_eframe(|_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             let bytes = app.session.create_blank(612.0, 792.0, 10_000).unwrap();
             app.open_bytes("synthetic-ten-thousand.pdf", None, bytes.as_ref().clone()).unwrap();
             app.right = Some(RightPanel::Pages);
@@ -6946,14 +6946,14 @@ trailer << /Root 1 0 R >>
         }
         bytes.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n", objs.len() + 1).as_bytes());
         let mut h = egui_kittest::Harness::builder().with_size(vec2(1400.0, 1100.0)).build_eframe(move |_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes("picture.pdf", None, bytes.clone()).unwrap();
             app.set_option("zoom", "100").unwrap();
             app.quick_tool = QuickTool::EditText;
             app
         });
-        let settle = |h: &mut egui_kittest::Harness<'static, PdfCraftApp>| {
+        let settle = |h: &mut egui_kittest::Harness<'static, PdfromeoApp>| {
             for _ in 0..400 {
                 h.step();
                 if !h.state().render_pending() {
@@ -6975,7 +6975,7 @@ trailer << /Root 1 0 R >>
         };
         let (old, new) = (Rect::from_two_pos(at(42.0, 262.0), at(98.0, 318.0)), Rect::from_two_pos(at(182.0, 82.0), at(238.0, 138.0)));
         // Select the picture and drag it, without overlap, from (40, 260) to (180, 80).
-        let drag = |h: &mut egui_kittest::Harness<'static, PdfCraftApp>, from: Pos2, to: Pos2, release: bool| {
+        let drag = |h: &mut egui_kittest::Harness<'static, PdfromeoApp>, from: Pos2, to: Pos2, release: bool| {
             h.hover_at(from);
             h.run_steps(1);
             h.drag_at(from);

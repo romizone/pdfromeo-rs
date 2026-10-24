@@ -4,7 +4,7 @@
 use pdfcraft_engine::Edit;
 use pdfcraft_platform::staging::{StagingName, staging_suffixes};
 
-use crate::PdfCraftApp;
+use crate::PdfromeoApp;
 
 /// What the user was doing when we asked whether to save.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,7 +26,7 @@ pub struct PendingOverwrite {
     pub dest: String,
     target: SaveTarget,
     /// What was to run once the document is written (close its tab, quit).
-    after: Box<dyn FnOnce(&mut PdfCraftApp) + Send>,
+    after: Box<dyn FnOnce(&mut PdfromeoApp) + Send>,
 }
 
 /// Where Save writes.
@@ -38,7 +38,7 @@ pub enum SaveTarget {
     As,
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Apply an edit to the active document. Returns `true` on success; failures are shown.
     pub fn apply_edit(&mut self, edit: Edit) -> bool {
         let Some((i, id)) = self.active_ids() else { return false };
@@ -1087,11 +1087,17 @@ fn short_name(path: &str) -> String {
     std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| path.to_string())
 }
 
-/// Offer bytes as a browser download.
+/// Offer bytes as a browser download. Inside the Android app's WebView, where blob downloads
+/// don't reach the system, they go to its `PdfromeoAndroid.save(name, base64)` bridge instead.
 #[cfg(target_arch = "wasm32")]
 pub(crate) fn download(name: &str, bytes: &[u8]) -> Result<(), String> {
     use wasm_bindgen::JsCast;
     let err = |e: wasm_bindgen::JsValue| format!("{e:?}");
+    if let Some(save) = android_save_bridge() {
+        use base64::Engine as _;
+        let data = base64::engine::general_purpose::STANDARD.encode(bytes);
+        return save.call2(&wasm_bindgen::JsValue::NULL, &name.into(), &data.into()).map(|_| ()).map_err(err);
+    }
     let array = js_sys::Uint8Array::from(bytes);
     let parts = js_sys::Array::of1(&array);
     let opts = web_sys::BlobPropertyBag::new();
@@ -1107,7 +1113,17 @@ pub(crate) fn download(name: &str, bytes: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-impl PdfCraftApp {
+/// The Android app's save function, bound to its bridge object, when running inside it.
+#[cfg(target_arch = "wasm32")]
+fn android_save_bridge() -> Option<js_sys::Function> {
+    use wasm_bindgen::JsCast;
+    let window = web_sys::window()?;
+    let bridge = js_sys::Reflect::get(&window, &"PdfromeoAndroid".into()).ok().filter(|b| b.is_object())?;
+    let save: js_sys::Function = js_sys::Reflect::get(&bridge, &"save".into()).ok()?.dyn_into().ok()?;
+    Some(save.bind0(&bridge))
+}
+
+impl PdfromeoApp {
     /// Carry out a Bookmarks-panel action as an undoable edit.
     pub fn bookmark_action(&mut self, action: crate::panels::BmAction) {
         use crate::panels::BmAction as A;
@@ -1484,7 +1500,7 @@ mod tests {
         std::fs::write(&attachment, &original).unwrap();
         let kept = dir.join("Quote.pdf");
 
-        let mut app = crate::PdfCraftApp::new();
+        let mut app = crate::PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("Quote.pdf", Some(attachment.to_string_lossy().into_owned()), original.clone()).unwrap();
         assert!(app.apply_edit(pdfcraft_engine::Edit::RotatePages { pages: vec![0], degrees: 90 }));
@@ -1524,13 +1540,13 @@ mod revert_draft_tests {
         }
     }
 
-    fn app() -> PdfCraftApp {
-        let mut app = PdfCraftApp::new();
+    fn app() -> PdfromeoApp {
+        let mut app = PdfromeoApp::new();
         app.open_bytes("source.pdf", None, include_bytes!("../tests/data/form.pdf").to_vec()).unwrap();
         app
     }
 
-    fn queue_draft(app: &mut PdfCraftApp, index: usize, text: &str) {
+    fn queue_draft(app: &mut PdfromeoApp, index: usize, text: &str) {
         app.views[index].forms.focus = Some(focus(text));
         let form = app.session.get(app.views[index].id).unwrap().form.clone();
         crate::forms_ui::commit(&mut app.views[index], &form);
@@ -1576,7 +1592,7 @@ mod revert_draft_tests {
     fn a_value_its_font_cannot_draw_is_kept_and_explained() {
         let mut app = app();
         let fill =
-            |app: &mut PdfCraftApp, text: &str| app.apply_edit(Edit::SetFieldValue { name: "name".into(), value: FieldValue::Text(text.into()) });
+            |app: &mut PdfromeoApp, text: &str| app.apply_edit(Edit::SetFieldValue { name: "name".into(), value: FieldValue::Text(text.into()) });
         assert!(fill(&mut app, "张三"));
         let toast = app.toast.as_ref().map(|t| t.0.clone()).expect("a notice");
         assert!(toast.contains("“张” (U+5F20)") && toast.contains("other PDF viewers redraw the field"), "{toast}");

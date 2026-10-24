@@ -7,7 +7,7 @@ use pdfcraft_engine::{CommentProps, Edit, LineEnding, NoteIcon};
 
 use crate::comments::swatch_grid;
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, widgets};
+use crate::{PdfromeoApp, widgets};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PropsTab {
@@ -46,7 +46,7 @@ fn ending_label(ending: LineEnding) -> &'static str {
     }
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Attach file: ask for a file (or take `attach_override`) and attach it at `at`.
     pub fn attach_file_comment(&mut self, page: usize, at: [f64; 2]) {
         match self.attach_override.take() {
@@ -161,7 +161,7 @@ pub fn edits(d: &PropsDraft) -> Vec<Edit> {
 }
 
 /// Draw the dialog; returns (apply, cancel).
-pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+pub(crate) fn body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> (bool, bool) {
     let history: Vec<(String, String, String)> = app
         .active_ids()
         .and_then(|(_, id)| app.session.get(id))

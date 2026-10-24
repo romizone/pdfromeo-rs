@@ -10,7 +10,7 @@ use pdfcraft_engine::DocId;
 use pdfcraft_engine::a11y::{Category, Options, Report, Rule, Status};
 
 use crate::theme::{self, Tokens};
-use crate::{Dialog, PdfCraftApp, PropsTab, RightPanel, icons, widgets};
+use crate::{Dialog, PdfromeoApp, PropsTab, RightPanel, icons, widgets};
 
 /// The options dialog's settings (kept for the session, like Acrobat's).
 #[derive(Clone, Debug, PartialEq)]
@@ -72,7 +72,7 @@ pub(crate) fn fixable(rule: Rule) -> bool {
     matches!(rule, Rule::PrimaryLanguage | Rule::Title | Rule::TabOrder)
 }
 
-pub(crate) fn options_body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+pub(crate) fn options_body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> (bool, bool) {
     let pages = app.active_ids().and_then(|(_, id)| app.session.get(id)).map_or(1, |d| d.info.pages.len().max(1));
     let o = &mut app.a11y_options;
     o.to = o.to.clamp(1, pages);
@@ -342,7 +342,7 @@ pub(crate) fn panel(ui: &mut egui::Ui, t: &Tokens, state: &mut A11yState, doc: D
     action
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Prepare for accessibility ▸ Find untagged content.
     pub(crate) fn find_untagged_content(&mut self) {
         let Some((_, id)) = self.active_ids() else { return };
@@ -559,7 +559,7 @@ fn figure_picture(ctx: &egui::Context, doc: &pdfcraft_engine::Document, f: &pdfc
     Some(ctx.load_texture("alt-figure", img, egui::TextureOptions::LINEAR))
 }
 
-pub(crate) fn alt_body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> (bool, bool) {
+pub(crate) fn alt_body(ui: &mut egui::Ui, app: &mut PdfromeoApp, t: &Tokens) -> (bool, bool) {
     let ctx = ui.ctx().clone();
     let doc = app.alt_draft.doc.and_then(|id| app.session.get(id));
     let d = &mut app.alt_draft;
@@ -628,7 +628,7 @@ pub(crate) fn alt_body(ui: &mut egui::Ui, app: &mut PdfCraftApp, t: &Tokens) -> 
     (save, cancel)
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Prepare for accessibility ▸ Tag form fields.
     pub(crate) fn autotag_form_fields(&mut self) {
         self.apply_edit(pdfcraft_engine::Edit::AutoTagFormFields);

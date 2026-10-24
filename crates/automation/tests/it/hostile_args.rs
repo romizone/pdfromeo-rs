@@ -392,7 +392,7 @@ fn listing(dir: &Path) -> Vec<(PathBuf, u64)> {
 
 /// A six-page file whose fourth `/Kids` entry points at an object that does not exist (#2660),
 /// with a link, a URI link and a comment on every page, and a form field and text added by
-/// PdfCraft (its `/PCAdded` marker) on the last. Readers
+/// Pdfromeo (its `/PCAdded` marker) on the last. Readers
 /// disagree on such a file: the viewer stopped at the dangling entry and saw three pages, while
 /// the editing layer sees all six, so annotations come back on pages the viewer does not have.
 fn dangling_kid_pdf() -> Vec<u8> {

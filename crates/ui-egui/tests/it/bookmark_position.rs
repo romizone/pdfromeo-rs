@@ -6,7 +6,7 @@ use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
 use pdfcraft_engine::Edit;
 use pdfcraft_render::DestView;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 /// Three 300×400 pages, each with a line of Helvetica text at (40, 150), the first optionally
 /// turned by `rotate` (the others upright).
@@ -45,9 +45,9 @@ fn fixture_of(sizes: &[(u32, u32)], rotate: u16) -> Vec<u8> {
     out
 }
 
-fn harness(rotate: u16) -> Harness<'static, PdfCraftApp> {
+fn harness(rotate: u16) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("text.pdf", None, fixture(rotate)).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -60,7 +60,7 @@ fn harness(rotate: u16) -> Harness<'static, PdfCraftApp> {
 }
 
 /// Run frames until rendering has finished and the layout holds still.
-fn settle(h: &mut Harness<'static, PdfCraftApp>) {
+fn settle(h: &mut Harness<'static, PdfromeoApp>) {
     for _ in 0..200 {
         h.run_steps(2);
         if !h.state().render_pending() {
@@ -71,7 +71,7 @@ fn settle(h: &mut Harness<'static, PdfCraftApp>) {
 }
 
 /// Make a bookmark with ⌘B, as the Bookmarks button does, and say what it goes to.
-fn new_bookmark(h: &mut Harness<'static, PdfCraftApp>) -> (Option<usize>, DestView) {
+fn new_bookmark(h: &mut Harness<'static, PdfromeoApp>) -> (Option<usize>, DestView) {
     h.key_press_modifiers(Modifiers::COMMAND, Key::B);
     h.run_steps(3);
     let id = h.state().views[0].id;
@@ -148,7 +148,7 @@ fn a_bookmark_made_on_a_turned_page_pins_the_axis_the_window_scrolls_along() {
 }
 
 /// Turn the view a quarter at a time (View ▸ Rotate View) and let the layout settle.
-fn rotate_view(h: &mut Harness<'static, PdfCraftApp>, degrees: u16) {
+fn rotate_view(h: &mut Harness<'static, PdfromeoApp>, degrees: u16) {
     h.state_mut().views[0].rotation = degrees;
     h.run_steps(3);
     settle(h);
@@ -207,7 +207,7 @@ fn a_bookmark_in_a_spread_of_unequal_pages_goes_to_the_page_crossing_the_top_of_
     use pdfcraft_ui_egui::canvas::PageLayout;
     // Pages 1 and 2 share a row; page 1 is shorter, so it is centred and starts below page 2's top.
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(|_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("spread.pdf", None, fixture_of(&[(300, 200), (300, 400), (300, 400)], 0)).expect("opens");
         app.set_option("left", "closed").unwrap();

@@ -13,7 +13,7 @@ use pdfcraft_engine::optimizer::{OptimizeStage, Optimized};
 use pdfcraft_engine::{DocId, EditError, Hidden, OptimizeReport};
 
 use crate::theme::{self, Tokens};
-use crate::{PdfCraftApp, widgets};
+use crate::{PdfromeoApp, widgets};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OptimizeTab {
@@ -296,7 +296,7 @@ pub(crate) fn audit_body(ui: &mut egui::Ui, rows: &[pdfcraft_engine::optimize::S
     ok
 }
 
-impl PdfCraftApp {
+impl PdfromeoApp {
     /// Optimize PDF with the dialog's choices on a worker thread; the copy is saved when done.
     pub fn optimize_with_draft(&mut self) {
         let (settings, discard) = (self.optimize_draft.settings.clone(), self.optimize_draft.discard.clone());
@@ -405,7 +405,7 @@ mod tests {
         let progress = Arc::new(Mutex::new(OptimizeProgress { stage: OptimizeStage::Images { done: 3, total: 10 }, ..Default::default() }));
         let p = progress.clone();
         let mut h = Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_eframe(move |_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes("notes.txt", None, b"hello".to_vec()).unwrap();
             let (_, doc) = app.active_ids().unwrap();
@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn a_second_run_is_refused_while_one_is_going() {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("notes.txt", None, b"hello".to_vec()).unwrap();
         let (_, doc) = app.active_ids().unwrap();

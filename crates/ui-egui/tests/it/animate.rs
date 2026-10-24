@@ -4,7 +4,7 @@
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 /// A one-page PDF whose page has `/Annots [6 0 R …]` for each of `annots` (objects from 6 on)
 /// and whose AcroForm lists the widgets among them.
@@ -34,9 +34,9 @@ fn pdf(annots: &[&str]) -> Vec<u8> {
     out
 }
 
-fn open(bytes: Vec<u8>) -> Harness<'static, PdfCraftApp> {
+fn open(bytes: Vec<u8>) -> Harness<'static, PdfromeoApp> {
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 800.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("animate.pdf", None, bytes).expect("opens");
         app

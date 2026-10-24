@@ -34,7 +34,7 @@ pub enum CalculationIssue {
     /// Its formula reads its own result: it reads `fields`, which read it back (itself, when it
     /// reads itself directly). No order is right for a loop: one of the formulas has to change.
     Cycle { fields: Vec<String> },
-    /// `/CO` leaves it out. PdfCraft calculates it after the listed fields, but other PDF viewers
+    /// `/CO` leaves it out. Pdfromeo calculates it after the listed fields, but other PDF viewers
     /// may not calculate it at all.
     NotInOrder,
 }

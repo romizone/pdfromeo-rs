@@ -3,7 +3,7 @@
 //! worker threads and is not part of the measurement.
 
 use egui_kittest::Harness;
-use pdfcraft_ui_egui::PdfCraftApp;
+use pdfcraft_ui_egui::PdfromeoApp;
 
 /// The one-minute load average, where the OS reports it (macOS `vm.loadavg`, Linux
 /// `/proc/loadavg`).
@@ -118,7 +118,7 @@ fn collapsed_comments_with_ten_thousand_named_roots_stay_within_the_frame_budget
     let _turn = SERIAL.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     let bytes = named_comments(10_000);
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("review.pdf", None, bytes).expect("opens");
         app.set_option("left", "closed").unwrap();
@@ -153,7 +153,7 @@ fn scrolling_a_500_page_document_stays_within_the_frame_budget() {
     let bytes = big(500);
     let t0 = std::time::Instant::now();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.open_bytes("big.pdf", None, bytes).expect("opens");
         app
@@ -178,7 +178,7 @@ fn panels_with_hundreds_of_items_stay_within_the_frame_budget() {
     for panel in ["comments", "pages", "fields"] {
         let b = bytes.clone();
         let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-            let mut app = PdfCraftApp::new();
+            let mut app = PdfromeoApp::new();
             app.set_option("language", "en").unwrap();
             app.open_bytes("big.pdf", None, b).expect("opens");
             app.set_option("panel", panel).unwrap();

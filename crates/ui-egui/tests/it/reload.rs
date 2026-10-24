@@ -7,7 +7,7 @@ use std::time::{Duration, SystemTime};
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::{By, Queryable};
-use pdfcraft_ui_egui::{PdfCraftApp, SaveTarget};
+use pdfcraft_ui_egui::{PdfromeoApp, SaveTarget};
 
 /// An `n`-page document with a proper xref table; page `i` shows "Page i+1", and with `notes`
 /// each page has a sticky note.
@@ -73,10 +73,10 @@ impl Drop for TempPdf {
     }
 }
 
-fn harness(path: &str) -> Harness<'static, PdfCraftApp> {
+fn harness(path: &str) -> Harness<'static, PdfromeoApp> {
     let path = path.to_owned();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         // The labels looked for are English, whatever the machine's language.
         app.set_option("language", "en").unwrap();
@@ -90,17 +90,17 @@ fn harness(path: &str) -> Harness<'static, PdfCraftApp> {
     h
 }
 
-fn pages(h: &Harness<'static, PdfCraftApp>) -> usize {
+fn pages(h: &Harness<'static, PdfromeoApp>) -> usize {
     let app = h.state();
     app.session.get(app.views[0].id).unwrap().info.pages.len()
 }
 
-fn dirty(h: &Harness<'static, PdfCraftApp>) -> bool {
+fn dirty(h: &Harness<'static, PdfromeoApp>) -> bool {
     let app = h.state();
     app.session.get(app.views[0].id).unwrap().dirty
 }
 
-fn rotate_first_page(h: &mut Harness<'static, PdfCraftApp>) {
+fn rotate_first_page(h: &mut Harness<'static, PdfromeoApp>) {
     h.state_mut().views[0].select_pages(&[0]);
     h.state_mut().apply_edit(pdfcraft_engine::Edit::RotatePages { pages: vec![0], degrees: 90 });
 }
@@ -267,7 +267,7 @@ fn a_deleted_file_leaves_the_document_open() {
 
 #[test]
 fn nothing_reloads_with_the_preference_off() {
-    assert!(PdfCraftApp::new().reload_changed_files, "on by default");
+    assert!(PdfromeoApp::new().reload_changed_files, "on by default");
     let file = TempPdf::new("off", &fixture(2));
     let mut h = harness(&file.path);
     h.state_mut().reload_changed_files = false;
@@ -275,7 +275,7 @@ fn nothing_reloads_with_the_preference_off() {
     file.rebuild(&fixture(3));
     h.run_steps(4);
     assert_eq!(pages(&h), 2);
-    let mut restarted = PdfCraftApp::new();
+    let mut restarted = PdfromeoApp::new();
     restarted.restore(&h.state().persist());
     assert!(!restarted.reload_changed_files, "the choice is kept");
 }
@@ -332,7 +332,7 @@ fn saving_checks_the_file_with_the_watcher_off_too() {
     let file = TempPdf::new("overwrite-unwatched", &fixture(2));
     let path = file.path.clone();
     let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_eframe(move |_cc| {
-        let mut app = PdfCraftApp::new();
+        let mut app = PdfromeoApp::new();
         app.set_option("language", "en").unwrap();
         app.run_inline = true;
         app.reload_changed_files = false;

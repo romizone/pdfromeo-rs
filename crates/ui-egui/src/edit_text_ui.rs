@@ -1774,8 +1774,8 @@ mod tests {
     }
 
     /// An app with one text document open, and an editor on its first paragraph.
-    fn preview_app() -> (crate::PdfCraftApp, LineEditor) {
-        let mut app = crate::PdfCraftApp::new();
+    fn preview_app() -> (crate::PdfromeoApp, LineEditor) {
+        let mut app = crate::PdfromeoApp::new();
         let bytes = app.session.create_from_text("Preview", "Preview text").unwrap();
         app.open_bytes("preview.pdf", None, bytes.as_ref().clone()).unwrap();
         let doc = app.session.get(app.views[0].id).unwrap();
